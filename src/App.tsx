@@ -93,7 +93,7 @@ const SEED_ROSTER: string[] = [
   "Trixie",
 ].sort();
 
-const STORAGE_KEY = "kulayqueue:v1";
+const STORAGE_KEY = "queuelay:v1";
 
 const loadSaved = () => {
   try {
@@ -303,7 +303,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="kq-display text-2xl sm:text-3xl font-bold text-white leading-none">
-                KulayQueue
+                Queuelay
               </h1>
               <p
                 className="text-xs sm:text-sm mt-1"

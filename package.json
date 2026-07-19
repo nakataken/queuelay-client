@@ -1,5 +1,5 @@
 {
-  "name": "kulayqueue-app",
+  "name": "queuelay-client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
