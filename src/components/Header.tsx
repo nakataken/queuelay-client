@@ -1,4 +1,5 @@
 import { COURT_COLORS, BG } from "../types";
+import { Logo } from "./Logo";
 
 export function Header({
   numCourts,
@@ -10,22 +11,16 @@ export function Header({
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
       <div className="flex items-center gap-3">
-        <div className="flex -space-x-1.5">
-          {COURT_COLORS.slice(0, 4).map((c, i) => (
-            <div
-              key={i}
-              style={{ background: c.bg, borderColor: BG }}
-              className="w-4 h-4 rounded-full border-2"
-            />
-          ))}
-        </div>
-        <div>
-          <h1 className="kq-display text-2xl sm:text-3xl font-bold text-white leading-none">
-            Queuelay
-          </h1>
-          <p className="text-xs sm:text-sm mt-1" style={{ color: "#9FC4BE" }}>
-            Team Kulay &middot; Open Play Rotation
-          </p>
+        <div className="flex items-center gap-3">
+          <Logo size={40} />
+          <div>
+            <h1 className="kq-display text-2xl sm:text-3xl font-bold text-white leading-none">
+              Queuelay
+            </h1>
+            <p className="text-xs sm:text-sm mt-1" style={{ color: "#9FC4BE" }}>
+              Team Kulay &middot; Open Play Rotation
+            </p>
+          </div>
         </div>
       </div>
 
