@@ -27,7 +27,7 @@ export type PlayerLevel = "A" | "B" | "C";
 
 export interface SeedPlayer {
   name: string;
-  level: string;
+  level: PlayerLevel;
 }
 
 export const LEVEL_LABEL: Record<PlayerLevel, string> = {

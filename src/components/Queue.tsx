@@ -231,6 +231,32 @@ export function Queue() {
     });
   };
 
+  const resetAll = () => {
+    if (
+      !window.confirm(
+        "Reset everything? This clears the roster, queue, courts, player stats, and match history. This can't be undone.",
+      )
+    )
+      return;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    setNumCourts(2);
+    setCourts(Array(2).fill(null));
+    setRoster(
+      SEED_ROSTER.map((p, i) => ({ id: i + 1, name: p.name, level: p.level })),
+    );
+    setQueueIds([]);
+    setRequeue(true);
+    setPlayerStats({});
+    setMatches([]);
+    idRef.current = SEED_ROSTER.length + 1;
+    colorRef.current = 0;
+    gameRef.current = 0;
+  };
+
   const nextUp = queueIds.slice(0, 4);
   const openCourtExists = courts.some((c) => !c);
 
@@ -277,7 +303,11 @@ export function Queue() {
     `}</style>
 
       <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
-        <Header numCourts={numCourts} onChangeCourtCount={changeCourtCount} />
+        <Header
+          numCourts={numCourts}
+          onChangeCourtCount={changeCourtCount}
+          onReset={resetAll}
+        />
         <TabBar active={activeTab} onChange={setActiveTab} />
 
         {activeTab === "queue" ? (
