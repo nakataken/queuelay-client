@@ -93,6 +93,19 @@ const SEED_ROSTER: string[] = [
   "Trixie",
 ].sort();
 
+const STORAGE_KEY = "kulayqueue:v1";
+
+const loadSaved = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saved = typeof window !== "undefined" ? loadSaved() : null;
+
 export default function App() {
   const [numCourts, setNumCourts] = useState<number>(2);
   const [courts, setCourts] = useState<Court[]>(Array(2).fill(null));
@@ -234,6 +247,26 @@ export default function App() {
 
   const nextUp = queueIds.slice(0, 4);
   const openCourtExists = courts.some((c) => !c);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          numCourts,
+          courts,
+          roster,
+          queueIds,
+          requeue,
+          playerStats,
+          nextId: idRef.current,
+          colorCounter: colorRef.current,
+        }),
+      );
+    } catch {
+      // storage unavailable — fail silently
+    }
+  }, [numCourts, courts, roster, queueIds, requeue, playerStats]);
 
   return (
     <div
