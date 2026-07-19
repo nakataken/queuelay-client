@@ -12,10 +12,11 @@ export interface CourtColor {
 
 export interface ActiveCourt {
   ids: number[];
+  teams: [number[], number[]]; // NEW — the two paired-up teams
   color: CourtColor;
   startedAt: number;
+  gameNumber: number;
 }
-
 export type Court = ActiveCourt | null;
 
 export interface PlayerStats {

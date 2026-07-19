@@ -33,7 +33,6 @@ export function levelSpread(
   return Math.max(...weights) - Math.min(...weights);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function loadSaved(): any {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -41,4 +40,47 @@ export function loadSaved(): any {
   } catch {
     return null;
   }
+}
+
+export function bestTeamSplit(
+  ids: number[],
+  levelOf: (id: number) => PlayerLevel,
+): { teamA: number[]; teamB: number[]; imbalance: number } {
+  if (ids.length !== 4) {
+    return { teamA: ids.slice(0, 2), teamB: ids.slice(2, 4), imbalance: 0 };
+  }
+  const [a, b, c, d] = ids;
+  const pairings: [number[], number[]][] = [
+    [
+      [a, b],
+      [c, d],
+    ],
+    [
+      [a, c],
+      [b, d],
+    ],
+    [
+      [a, d],
+      [b, c],
+    ],
+  ];
+  let best = pairings[0];
+  let bestDiff = Infinity;
+  for (const [teamA, teamB] of pairings) {
+    const wA = teamA.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
+    const wB = teamB.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
+    const diff = Math.abs(wA - wB);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = [teamA, teamB];
+    }
+  }
+  return { teamA: best[0], teamB: best[1], imbalance: bestDiff };
+}
+
+export function levelDiversity(
+  ids: number[],
+  levelOf: (id: number) => PlayerLevel,
+): number {
+  return new Set(ids.map((id) => levelOf(id))).size;
 }

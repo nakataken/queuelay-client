@@ -10,7 +10,13 @@ import {
   LEVEL_CYCLE,
   BG,
 } from "../types";
-import { shuffle, combinations, levelSpread, loadSaved } from "../utils";
+import {
+  shuffle,
+  combinations,
+  bestTeamSplit,
+  levelDiversity,
+  loadSaved,
+} from "../utils";
 import { Header } from "./Header";
 import { AvailablePanel } from "./AvailablePanel";
 import { CourtsPanel } from "./CourtsPanel";
@@ -122,13 +128,21 @@ export function Queue() {
     gameRef.current += 1;
     const gameNumber = gameRef.current;
     const startedAt = Date.now();
+    const { teamA, teamB } = bestTeamSplit(group, levelOf);
 
     setQueueIds(rest);
     setCourts((c) => {
       const copy = [...c];
-      copy[idx] = { ids: group, color, startedAt, gameNumber };
+      copy[idx] = {
+        ids: group,
+        teams: [teamA, teamB],
+        color,
+        startedAt,
+        gameNumber,
+      };
       return copy;
     });
+
     setPlayerStats((prev) => {
       const next = { ...prev };
       group.forEach((id) => {
@@ -181,14 +195,23 @@ export function Queue() {
       .slice(0, 10);
     const flexSlots = 4 - mandatory.length;
 
+    const scoreGroup = (group: number[]) => ({
+      imbalance: bestTeamSplit(group, levelOf).imbalance,
+      diversity: levelDiversity(group, levelOf),
+    });
+
     let bestGroup = [...mandatory, ...flexPool.slice(0, flexSlots)];
-    let bestSpread = levelSpread(bestGroup, levelOf);
+    let bestScore = scoreGroup(bestGroup);
 
     for (const combo of combinations(flexPool, flexSlots)) {
       const candidate = [...mandatory, ...combo];
-      const spread = levelSpread(candidate, levelOf);
-      if (spread < bestSpread) {
-        bestSpread = spread;
+      const score = scoreGroup(candidate);
+      if (
+        score.imbalance < bestScore.imbalance ||
+        (score.imbalance === bestScore.imbalance &&
+          score.diversity > bestScore.diversity)
+      ) {
+        bestScore = score;
         bestGroup = candidate;
       }
     }

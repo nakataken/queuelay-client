@@ -1,5 +1,5 @@
 import { Timer } from "lucide-react";
-import { Court, PlayerLevel, CARD } from "../types";
+import { Court, PlayerLevel, CARD, INK, INK_SOFT } from "../types";
 import { fmtClock } from "../utils";
 import { LevelBadge } from "./LevelBadge";
 
@@ -43,7 +43,7 @@ export function CourtsPanel({
                   <div className="flex items-center justify-between mb-3">
                     <span
                       className="kq-display font-semibold text-sm"
-                      style={{ color: "#0E2A26" }}
+                      style={{ color: INK }}
                     >
                       Court {idx + 1}
                     </span>
@@ -57,18 +57,94 @@ export function CourtsPanel({
                       <Timer size={12} /> {fmtClock(tick - court.startedAt)}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {court.ids.map((id) => (
-                      <span key={id} className="inline-flex items-center gap-1">
-                        <LevelBadge level={levelOf(id)} />
-                        {nameOf(id)}
+
+                  {/* 2v2 matchup, split by a net-style divider */}
+                  <div
+                    className="rounded-xl overflow-hidden mb-4 flex"
+                    style={{
+                      background: "#1C6B4A",
+                      border: "3px solid rgba(255,255,255,0.85)",
+                    }}
+                  >
+                    {/* Team A — left side */}
+                    <div className="relative flex-1 flex flex-col items-center justify-center gap-1.5 px-2 py-3">
+                      {/* center service line */}
+                      <div
+                        className="absolute left-1 right-1 top-1/2 h-px"
+                        style={{ background: "rgba(255,255,255,0.4)" }}
+                      />
+                      {court.teams[0].map((id) => (
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold z-10"
+                          style={{ color: "#fff" }}
+                        >
+                          <LevelBadge level={levelOf(id)} />
+                          {nameOf(id)}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Kitchen (non-volley zone) band */}
+                    <div
+                      style={{ width: 1, background: "rgba(255,255,255,0.5)" }}
+                    />
+                    <div
+                      style={{ width: 8, background: "rgba(255,255,255,0.08)" }}
+                    />
+
+                    {/* Net */}
+                    <div
+                      className="relative flex items-center justify-center"
+                      style={{
+                        width: 10,
+                        background:
+                          "repeating-linear-gradient(0deg, rgba(255,255,255,0.6) 0, rgba(255,255,255,0.6) 2px, transparent 2px, transparent 6px)",
+                      }}
+                    >
+                      <span
+                        className="kq-mono absolute text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{
+                          background: court.color.bg,
+                          color: "#fff",
+                          writingMode: "vertical-rl",
+                        }}
+                      >
+                        VS
                       </span>
-                    ))}
+                    </div>
+
+                    {/* Kitchen (non-volley zone) band */}
+                    <div
+                      style={{ width: 8, background: "rgba(255,255,255,0.08)" }}
+                    />
+                    <div
+                      style={{ width: 1, background: "rgba(255,255,255,0.5)" }}
+                    />
+
+                    {/* Team B — right side */}
+                    <div className="relative flex-1 flex flex-col items-center justify-center gap-1.5 px-2 py-3">
+                      <div
+                        className="absolute left-1 right-1 top-1/2 h-px"
+                        style={{ background: "rgba(255,255,255,0.4)" }}
+                      />
+                      {court.teams[1].map((id) => (
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold z-10"
+                          style={{ color: "#fff" }}
+                        >
+                          <LevelBadge level={levelOf(id)} />
+                          {nameOf(id)}
+                        </span>
+                      ))}
+                    </div>
                   </div>
+
                   <button
                     onClick={() => onFinishGame(idx)}
                     className="kq-btn w-full rounded-lg py-2 text-sm font-semibold"
-                    style={{ background: "#0E2A26", color: "#fff" }}
+                    style={{ background: INK, color: "#fff" }}
                   >
                     Finish game
                   </button>
