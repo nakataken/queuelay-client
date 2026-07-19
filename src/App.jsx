@@ -1,5 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import { X, ChevronUp, ChevronDown, Users, Timer, UserPlus, Trash2, Plus } from "lucide-react";
+import {
+  X,
+  ChevronUp,
+  ChevronDown,
+  Users,
+  Timer,
+  UserPlus,
+  Trash2,
+  Plus,
+} from "lucide-react";
 
 // Kulay ("color") palette — each round of court assignment cycles through these,
 // so the board visually fills with color the way an open-play session fills with people.
@@ -26,15 +35,32 @@ function fmtClock(ms) {
 }
 
 const SEED_ROSTER = [
-  "Anna", "Ben", "Cara", "Dado", "Elai", "Fran",
-  "Gio", "Hana", "Ivan", "Jomari", "Kai", "Liza",
-];
+  "Acob",
+  "Bryan",
+  "Chad",
+  "Chacha",
+  "Clarissa",
+  "Dan",
+  "Irish",
+  "Jiemuel",
+  "Osong",
+  "Khaye",
+  "Ken",
+  "Kevin",
+  "Mac",
+  "Rose",
+  "Roy",
+  "Ryan",
+  "Sandee",
+  "Topher",
+  "Trixie",
+].sort();
 
 export default function App() {
   const [numCourts, setNumCourts] = useState(4);
   const [courts, setCourts] = useState(Array(4).fill(null)); // { ids: [id,...], color, startedAt }
   const [roster, setRoster] = useState(() =>
-    SEED_ROSTER.map((name, i) => ({ id: i + 1, name }))
+    SEED_ROSTER.map((name, i) => ({ id: i + 1, name })),
   );
   const [queueIds, setQueueIds] = useState([]);
   const [rosterInput, setRosterInput] = useState("");
@@ -51,7 +77,9 @@ export default function App() {
   const nameOf = (id) => roster.find((r) => r.id === id)?.name || "—";
   const playingIds = new Set(courts.flatMap((c) => (c ? c.ids : [])));
   const waitingSet = new Set(queueIds);
-  const available = roster.filter((r) => !playingIds.has(r.id) && !waitingSet.has(r.id));
+  const available = roster.filter(
+    (r) => !playingIds.has(r.id) && !waitingSet.has(r.id),
+  );
 
   const addRosterMember = (e) => {
     e.preventDefault();
@@ -64,14 +92,21 @@ export default function App() {
   const removeRosterMember = (id) => {
     setRoster((r) => r.filter((p) => p.id !== id));
     setQueueIds((q) => q.filter((qid) => qid !== id));
-    setCourts((c) => c.map((court) => (court ? { ...court, ids: court.ids.filter((cid) => cid !== id) } : court)));
+    setCourts((c) =>
+      c.map((court) =>
+        court
+          ? { ...court, ids: court.ids.filter((cid) => cid !== id) }
+          : court,
+      ),
+    );
   };
 
   const checkIn = (id) => {
     setQueueIds((q) => (q.includes(id) ? q : [...q, id]));
   };
 
-  const removeFromQueue = (id) => setQueueIds((q) => q.filter((qid) => qid !== id));
+  const removeFromQueue = (id) =>
+    setQueueIds((q) => q.filter((qid) => qid !== id));
 
   const moveQueue = (id, dir) => {
     setQueueIds((q) => {
@@ -114,7 +149,8 @@ export default function App() {
     setNumCourts((n) => {
       const next = Math.min(10, Math.max(1, n + delta));
       setCourts((c) => {
-        if (next > c.length) return [...c, ...Array(next - c.length).fill(null)];
+        if (next > c.length)
+          return [...c, ...Array(next - c.length).fill(null)];
         const dropped = c.slice(next);
         if (dropped.some((x) => x)) return c;
         return c.slice(0, next);
@@ -128,7 +164,12 @@ export default function App() {
 
   return (
     <div
-      style={{ background: BG, minHeight: "100%", fontFamily: "'Inter', sans-serif", color: INK }}
+      style={{
+        background: BG,
+        minHeight: "100%",
+        fontFamily: "'Inter', sans-serif",
+        color: INK,
+      }}
       className="w-full min-h-screen"
     >
       <style>{`
@@ -147,21 +188,53 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="flex -space-x-1.5">
               {COURT_COLORS.slice(0, 4).map((c, i) => (
-                <div key={i} style={{ background: c.bg, borderColor: BG }} className="w-4 h-4 rounded-full border-2" />
+                <div
+                  key={i}
+                  style={{ background: c.bg, borderColor: BG }}
+                  className="w-4 h-4 rounded-full border-2"
+                />
               ))}
             </div>
             <div>
-              <h1 className="kq-display text-2xl sm:text-3xl font-bold text-white leading-none">KulayQueue</h1>
-              <p className="text-xs sm:text-sm mt-1" style={{ color: "#9FC4BE" }}>Team Kulay &middot; Open Play Rotation</p>
+              <h1 className="kq-display text-2xl sm:text-3xl font-bold text-white leading-none">
+                KulayQueue
+              </h1>
+              <p
+                className="text-xs sm:text-sm mt-1"
+                style={{ color: "#9FC4BE" }}
+              >
+                Team Kulay &middot; Open Play Rotation
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.08)" }}>
-            <span className="text-xs font-medium" style={{ color: "#9FC4BE" }}>Courts</span>
+          <div
+            className="flex items-center gap-3 rounded-xl px-3 py-2"
+            style={{ background: "rgba(255,255,255,0.08)" }}
+          >
+            <span className="text-xs font-medium" style={{ color: "#9FC4BE" }}>
+              Courts
+            </span>
             <div className="flex items-center gap-2">
-              <button onClick={() => changeCourtCount(-1)} className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ background: "rgba(255,255,255,0.15)" }} aria-label="Remove a court">−</button>
-              <span className="kq-mono text-white w-5 text-center">{numCourts}</span>
-              <button onClick={() => changeCourtCount(1)} className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ background: "rgba(255,255,255,0.15)" }} aria-label="Add a court">+</button>
+              <button
+                onClick={() => changeCourtCount(-1)}
+                className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+                aria-label="Remove a court"
+              >
+                −
+              </button>
+              <span className="kq-mono text-white w-5 text-center">
+                {numCourts}
+              </span>
+              <button
+                onClick={() => changeCourtCount(1)}
+                className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+                aria-label="Add a court"
+              >
+                +
+              </button>
             </div>
           </div>
         </div>
@@ -172,16 +245,25 @@ export default function App() {
             {/* Available players */}
             <div className="rounded-2xl p-4" style={{ background: CARD }}>
               <div className="flex items-center justify-between mb-3">
-                <span className="kq-display font-semibold flex items-center gap-1.5" style={{ color: INK }}>
+                <span
+                  className="kq-display font-semibold flex items-center gap-1.5"
+                  style={{ color: INK }}
+                >
                   <Users size={16} /> Available
                 </span>
-                <span className="kq-mono text-xs px-2 py-0.5 rounded-full" style={{ background: "#EFEBE0", color: INK_SOFT }}>
+                <span
+                  className="kq-mono text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: "#EFEBE0", color: INK_SOFT }}
+                >
                   {available.length}
                 </span>
               </div>
 
               {available.length === 0 ? (
-                <p className="text-sm py-3 text-center" style={{ color: INK_SOFT }}>
+                <p
+                  className="text-sm py-3 text-center"
+                  style={{ color: INK_SOFT }}
+                >
                   Everyone on the roster is checked in or playing.
                 </p>
               ) : (
@@ -190,7 +272,10 @@ export default function App() {
                     <div
                       key={p.id}
                       className="kq-chip flex items-center gap-1 rounded-full pl-1 pr-1"
-                      style={{ background: "#F4F2EA", border: `1px solid ${CARD_LINE}` }}
+                      style={{
+                        background: "#F4F2EA",
+                        border: `1px solid ${CARD_LINE}`,
+                      }}
                     >
                       <button
                         onClick={() => checkIn(p.id)}
@@ -213,7 +298,11 @@ export default function App() {
                 </div>
               )}
 
-              <form onSubmit={addRosterMember} className="flex gap-2 pt-1" style={{ borderTop: `1px solid ${CARD_LINE}` }}>
+              <form
+                onSubmit={addRosterMember}
+                className="flex gap-2 pt-1"
+                style={{ borderTop: `1px solid ${CARD_LINE}` }}
+              >
                 <input
                   value={rosterInput}
                   onChange={(e) => setRosterInput(e.target.value)}
@@ -240,42 +329,83 @@ export default function App() {
                     className="rounded-2xl overflow-hidden"
                     style={{
                       background: court ? CARD : "transparent",
-                      border: court ? "none" : `2px dashed rgba(255,255,255,0.3)`,
+                      border: court
+                        ? "none"
+                        : `2px dashed rgba(255,255,255,0.3)`,
                     }}
                   >
                     {court ? (
                       <>
-                        <div style={{ background: court.color.bg }} className="h-2" />
+                        <div
+                          style={{ background: court.color.bg }}
+                          className="h-2"
+                        />
                         <div className="p-4">
                           <div className="flex items-center justify-between mb-3">
-                            <span className="kq-display font-semibold text-sm" style={{ color: INK }}>Court {idx + 1}</span>
-                            <span className="kq-mono text-xs flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: court.color.soft, color: court.color.bg }}>
-                              <Timer size={12} /> {fmtClock(tick - court.startedAt)}
+                            <span
+                              className="kq-display font-semibold text-sm"
+                              style={{ color: INK }}
+                            >
+                              Court {idx + 1}
+                            </span>
+                            <span
+                              className="kq-mono text-xs flex items-center gap-1 px-2 py-1 rounded-full"
+                              style={{
+                                background: court.color.soft,
+                                color: court.color.bg,
+                              }}
+                            >
+                              <Timer size={12} />{" "}
+                              {fmtClock(tick - court.startedAt)}
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-1.5 mb-4">
                             {court.ids.map((id) => (
-                              <span key={id} className="text-xs sm:text-sm px-2.5 py-1 rounded-lg font-medium" style={{ background: court.color.soft, color: INK }}>
+                              <span
+                                key={id}
+                                className="text-xs sm:text-sm px-2.5 py-1 rounded-lg font-medium"
+                                style={{
+                                  background: court.color.soft,
+                                  color: INK,
+                                }}
+                              >
                                 {nameOf(id)}
                               </span>
                             ))}
                           </div>
-                          <button onClick={() => finishGame(idx)} className="kq-btn w-full rounded-lg py-2 text-sm font-semibold" style={{ background: INK, color: "#fff" }}>
+                          <button
+                            onClick={() => finishGame(idx)}
+                            className="kq-btn w-full rounded-lg py-2 text-sm font-semibold"
+                            style={{ background: INK, color: "#fff" }}
+                          >
                             Finish game
                           </button>
                         </div>
                       </>
                     ) : (
                       <div className="p-4 flex flex-col items-center justify-center text-center min-h-[168px]">
-                        <span className="kq-display text-sm font-semibold mb-1" style={{ color: "rgba(255,255,255,0.85)" }}>Court {idx + 1} &middot; Open</span>
-                        <span className="text-xs mb-3" style={{ color: "#9FC4BE" }}>
-                          {queueIds.length > 0 ? `Ready for ${Math.min(4, queueIds.length)} player${Math.min(4, queueIds.length) === 1 ? "" : "s"}` : "Waiting for check-ins"}
+                        <span
+                          className="kq-display text-sm font-semibold mb-1"
+                          style={{ color: "rgba(255,255,255,0.85)" }}
+                        >
+                          Court {idx + 1} &middot; Open
+                        </span>
+                        <span
+                          className="text-xs mb-3"
+                          style={{ color: "#9FC4BE" }}
+                        >
+                          {queueIds.length > 0
+                            ? `Ready for ${Math.min(4, queueIds.length)} player${Math.min(4, queueIds.length) === 1 ? "" : "s"}`
+                            : "Waiting for check-ins"}
                         </span>
                         <button
                           onClick={() => assignToCourt(idx)}
                           disabled={queueIds.length === 0}
                           className="kq-btn rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40"
-                          style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}
+                          style={{
+                            background: "rgba(255,255,255,0.15)",
+                            color: "#fff",
+                          }}
                         >
                           Send next up
                         </button>
@@ -285,8 +415,16 @@ export default function App() {
                 ))}
               </div>
 
-              <label className="flex items-center gap-2 mt-4 text-xs sm:text-sm" style={{ color: "#9FC4BE" }}>
-                <input type="checkbox" checked={requeue} onChange={(e) => setRequeue(e.target.checked)} className="rounded" />
+              <label
+                className="flex items-center gap-2 mt-4 text-xs sm:text-sm"
+                style={{ color: "#9FC4BE" }}
+              >
+                <input
+                  type="checkbox"
+                  checked={requeue}
+                  onChange={(e) => setRequeue(e.target.checked)}
+                  className="rounded"
+                />
                 Send players back to the queue when a game finishes
               </label>
             </div>
@@ -295,16 +433,25 @@ export default function App() {
           {/* Waiting queue */}
           <div className="rounded-2xl p-4 h-fit" style={{ background: CARD }}>
             <div className="flex items-center justify-between mb-3">
-              <span className="kq-display font-semibold flex items-center gap-1.5" style={{ color: INK }}>
+              <span
+                className="kq-display font-semibold flex items-center gap-1.5"
+                style={{ color: INK }}
+              >
                 <UserPlus size={16} /> Waiting
               </span>
-              <span className="kq-mono text-xs px-2 py-0.5 rounded-full" style={{ background: "#EFEBE0", color: INK_SOFT }}>
+              <span
+                className="kq-mono text-xs px-2 py-0.5 rounded-full"
+                style={{ background: "#EFEBE0", color: INK_SOFT }}
+              >
                 {queueIds.length}
               </span>
             </div>
 
             {queueIds.length === 0 ? (
-              <p className="text-sm py-6 text-center" style={{ color: INK_SOFT }}>
+              <p
+                className="text-sm py-6 text-center"
+                style={{ color: INK_SOFT }}
+              >
                 No one's waiting. Tap a name under Available to check them in.
               </p>
             ) : (
@@ -318,15 +465,36 @@ export default function App() {
                       border: `1px solid ${i < nextUp.length ? "#FFE1A3" : CARD_LINE}`,
                     }}
                   >
-                    <span className="kq-mono text-xs w-4 text-right" style={{ color: INK_SOFT }}>{i + 1}</span>
-                    <span className="text-sm flex-1 font-medium" style={{ color: INK }}>{nameOf(id)}</span>
-                    <button onClick={() => moveQueue(id, -1)} disabled={i === 0} className="disabled:opacity-30">
+                    <span
+                      className="kq-mono text-xs w-4 text-right"
+                      style={{ color: INK_SOFT }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span
+                      className="text-sm flex-1 font-medium"
+                      style={{ color: INK }}
+                    >
+                      {nameOf(id)}
+                    </span>
+                    <button
+                      onClick={() => moveQueue(id, -1)}
+                      disabled={i === 0}
+                      className="disabled:opacity-30"
+                    >
                       <ChevronUp size={15} style={{ color: INK_SOFT }} />
                     </button>
-                    <button onClick={() => moveQueue(id, 1)} disabled={i === queueIds.length - 1} className="disabled:opacity-30">
+                    <button
+                      onClick={() => moveQueue(id, 1)}
+                      disabled={i === queueIds.length - 1}
+                      className="disabled:opacity-30"
+                    >
                       <ChevronDown size={15} style={{ color: INK_SOFT }} />
                     </button>
-                    <button onClick={() => removeFromQueue(id)} title="Back to available">
+                    <button
+                      onClick={() => removeFromQueue(id)}
+                      title="Back to available"
+                    >
                       <X size={15} style={{ color: INK_SOFT }} />
                     </button>
                   </li>
@@ -335,13 +503,24 @@ export default function App() {
             )}
 
             {nextUp.length > 0 && (
-              <div className="pt-3" style={{ borderTop: `1px solid ${CARD_LINE}` }}>
-                <span className="text-xs font-semibold" style={{ color: INK_SOFT }}>
-                  Up next{!openCourtExists ? " (waiting for an open court)" : ""}
+              <div
+                className="pt-3"
+                style={{ borderTop: `1px solid ${CARD_LINE}` }}
+              >
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: INK_SOFT }}
+                >
+                  Up next
+                  {!openCourtExists ? " (waiting for an open court)" : ""}
                 </span>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {nextUp.map((id) => (
-                    <span key={id} className="text-xs px-2 py-1 rounded-lg font-medium" style={{ background: "#FFF6E5", color: "#8A5B00" }}>
+                    <span
+                      key={id}
+                      className="text-xs px-2 py-1 rounded-lg font-medium"
+                      style={{ background: "#FFF6E5", color: "#8A5B00" }}
+                    >
                       {nameOf(id)}
                     </span>
                   ))}
