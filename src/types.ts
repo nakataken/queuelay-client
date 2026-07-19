@@ -90,3 +90,18 @@ export const SEED_ROSTER: SeedPlayer[] = [
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 export const STORAGE_KEY = "queuelay:v1";
+export interface ActiveCourt {
+  ids: number[];
+  color: CourtColor;
+  startedAt: number;
+  gameNumber: number; // NEW — links this court to its MatchRecord
+}
+
+export interface MatchRecord {
+  gameNumber: number;
+  courtIndex: number;
+  playerIds: number[];
+  color: CourtColor;
+  startedAt: number;
+  finishedAt: number | null; // null while still in progress
+}

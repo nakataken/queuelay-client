@@ -16,6 +16,9 @@ import { AvailablePanel } from "./AvailablePanel";
 import { CourtsPanel } from "./CourtsPanel";
 import { WaitingPanel } from "./WaitingPanel";
 import { PlayerStatsPanel } from "./PlayerStatsPanel";
+import { MatchRecord } from "../types";
+import { TabBar, TabKey } from "../components/TabBar";
+import { MatchHistoryPanel } from "../components/MatchHistoryPanel";
 
 const saved = typeof window !== "undefined" ? loadSaved() : null;
 
@@ -38,6 +41,9 @@ export function Queue() {
   const [playerStats, setPlayerStats] = useState<Record<number, PlayerStats>>(
     saved?.playerStats ?? {},
   );
+  const [matches, setMatches] = useState<MatchRecord[]>(saved?.matches ?? []);
+  const [activeTab, setActiveTab] = useState<TabKey>("queue");
+
   const gameRef = useRef<number>(saved?.gameCounter ?? 0);
 
   useEffect(() => {
@@ -111,11 +117,12 @@ export function Queue() {
     colorRef.current += 1;
     gameRef.current += 1;
     const gameNumber = gameRef.current;
+    const startedAt = Date.now();
 
     setQueueIds(rest);
     setCourts((c) => {
       const copy = [...c];
-      copy[idx] = { ids: group, color, startedAt: Date.now() };
+      copy[idx] = { ids: group, color, startedAt, gameNumber };
       return copy;
     });
     setPlayerStats((prev) => {
@@ -126,6 +133,17 @@ export function Queue() {
       });
       return next;
     });
+    setMatches((prev) => [
+      ...prev,
+      {
+        gameNumber,
+        courtIndex: idx,
+        playerIds: group,
+        color,
+        startedAt,
+        finishedAt: null,
+      },
+    ]);
   };
 
   const assignToCourt = (idx: number) => {
@@ -184,6 +202,15 @@ export function Queue() {
     if (court && requeue) {
       setQueueIds((q) => [...q, ...court.ids]);
     }
+    if (court) {
+      setMatches((prev) =>
+        prev.map((m) =>
+          m.gameNumber === court.gameNumber
+            ? { ...m, finishedAt: Date.now() }
+            : m,
+        ),
+      );
+    }
   };
 
   const changeCourtCount = (delta: number) => {
@@ -214,6 +241,7 @@ export function Queue() {
           queueIds,
           requeue,
           playerStats,
+          matches,
           nextId: idRef.current,
           colorCounter: colorRef.current,
           gameCounter: gameRef.current,
@@ -222,32 +250,33 @@ export function Queue() {
     } catch {
       // storage unavailable — fail silently
     }
-  }, [numCourts, courts, roster, queueIds, requeue, playerStats]);
+  }, [numCourts, courts, roster, queueIds, requeue, playerStats, matches]);
 
   return (
     <div
       style={{
         background: BG,
-        minHeight: "100%",
+        minHeight: "100vh",
         fontFamily: "'Inter', sans-serif",
         color: "#0E2A26",
       }}
       className="w-full min-h-screen"
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
-        .kq-display { font-family: 'Baloo 2', 'Inter', sans-serif; }
-        .kq-mono { font-family: 'JetBrains Mono', monospace; }
-        .kq-btn { transition: transform .12s ease, box-shadow .12s ease; }
-        .kq-btn:active { transform: scale(0.96); }
-        .kq-chip { transition: transform .12s ease, box-shadow .12s ease; }
-        .kq-chip:hover { transform: translateY(-1px); }
-      `}</style>
+      @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+      .kq-display { font-family: 'Baloo 2', 'Inter', sans-serif; }
+      .kq-mono { font-family: 'JetBrains Mono', monospace; }
+      .kq-btn { transition: transform .12s ease, box-shadow .12s ease; }
+      .kq-btn:active { transform: scale(0.96); }
+      .kq-chip { transition: transform .12s ease, box-shadow .12s ease; }
+      .kq-chip:hover { transform: translateY(-1px); }
+    `}</style>
 
       <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
         <Header numCourts={numCourts} onChangeCourtCount={changeCourtCount} />
+        <TabBar active={activeTab} onChange={setActiveTab} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
+        {activeTab === "queue" ? (
           <div className="flex flex-col gap-5">
             <AvailablePanel
               available={available}
@@ -259,6 +288,14 @@ export function Queue() {
               onCheckIn={checkIn}
               onCycleLevel={cycleLevel}
               onRemoveRosterMember={removeRosterMember}
+            />
+            <WaitingPanel
+              queueIds={queueIds}
+              nameOf={nameOf}
+              nextUp={nextUp}
+              openCourtExists={openCourtExists}
+              onMoveQueue={moveQueue}
+              onRemoveFromQueue={removeFromQueue}
             />
             <CourtsPanel
               courts={courts}
@@ -272,23 +309,16 @@ export function Queue() {
               levelOf={levelOf}
             />
           </div>
-
-          <div>
-            <WaitingPanel
-              queueIds={queueIds}
-              nameOf={nameOf}
-              nextUp={nextUp}
-              openCourtExists={openCourtExists}
-              onMoveQueue={moveQueue}
-              onRemoveFromQueue={removeFromQueue}
-            />
+        ) : (
+          <div className="flex flex-col gap-5">
+            <MatchHistoryPanel matches={matches} nameOf={nameOf} />
             <PlayerStatsPanel
               roster={roster}
               playerStats={playerStats}
               gameCount={gameRef.current}
             />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
