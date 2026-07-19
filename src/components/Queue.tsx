@@ -110,6 +110,10 @@ export function Queue() {
     });
   };
 
+  const shuffleQueue = () => {
+    setQueueIds((q) => shuffle(q));
+  };
+
   const finalizeAssignment = (idx: number, group: number[]) => {
     const groupSet = new Set(group);
     const rest = queueIds.filter((id) => !groupSet.has(id));
@@ -149,7 +153,7 @@ export function Queue() {
   const assignToCourt = (idx: number) => {
     if (queueIds.length < 1) return;
 
-    const withStats = shuffle(queueIds).map((id) => ({
+    const withStats = queueIds.map((id) => ({
       id,
       stats: playerStats[id] ?? { matches: 0, lastGame: 0 },
     }));
@@ -296,6 +300,7 @@ export function Queue() {
               openCourtExists={openCourtExists}
               onMoveQueue={moveQueue}
               onRemoveFromQueue={removeFromQueue}
+              onShuffle={shuffleQueue}
             />
             <CourtsPanel
               courts={courts}

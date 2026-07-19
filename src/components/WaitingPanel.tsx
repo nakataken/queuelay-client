@@ -1,5 +1,6 @@
 import { ChevronUp, ChevronDown, UserPlus, X } from "lucide-react";
 import { CARD, CARD_LINE, INK, INK_SOFT } from "../types";
+import { Shuffle } from "lucide-react";
 
 export function WaitingPanel({
   queueIds,
@@ -8,6 +9,7 @@ export function WaitingPanel({
   openCourtExists,
   onMoveQueue,
   onRemoveFromQueue,
+  onShuffle,
 }: {
   queueIds: number[];
   nameOf: (id: number) => string;
@@ -15,6 +17,7 @@ export function WaitingPanel({
   openCourtExists: boolean;
   onMoveQueue: (id: number, dir: 1 | -1) => void;
   onRemoveFromQueue: (id: number) => void;
+  onShuffle: () => void;
 }) {
   return (
     <div className="rounded-2xl p-4 h-fit" style={{ background: CARD }}>
@@ -25,12 +28,23 @@ export function WaitingPanel({
         >
           <UserPlus size={16} /> Waiting
         </span>
-        <span
-          className="kq-mono text-xs px-2 py-0.5 rounded-full"
-          style={{ background: "#EFEBE0", color: INK_SOFT }}
-        >
-          {queueIds.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className="kq-mono text-xs px-2 py-0.5 rounded-full"
+            style={{ background: "#EFEBE0", color: INK_SOFT }}
+          >
+            {queueIds.length}
+          </span>
+          <button
+            onClick={onShuffle}
+            disabled={queueIds.length < 2}
+            className="kq-btn flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full disabled:opacity-30"
+            style={{ background: "#EFEBE0", color: INK }}
+            title="Shuffle the waiting order"
+          >
+            <Shuffle size={12} /> Shuffle
+          </button>
+        </div>
       </div>
 
       {queueIds.length === 0 ? (
