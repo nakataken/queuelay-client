@@ -6,13 +6,40 @@ import {
   Users,
   Timer,
   UserPlus,
-  Trash2,
   Plus,
 } from "lucide-react";
 
+// ---- Types -----------------------------------------------------------
+
+interface Player {
+  id: number;
+  name: string;
+}
+
+interface CourtColor {
+  name: string;
+  bg: string;
+  soft: string;
+}
+
+interface ActiveCourt {
+  ids: number[];
+  color: CourtColor;
+  startedAt: number;
+}
+
+interface PlayerStats {
+  matches: number;
+  lastGame: number; // 0 = never played
+}
+
+type Court = ActiveCourt | null;
+
+// ---- Constants ---------------------------------------------------------
+
 // Kulay ("color") palette — each round of court assignment cycles through these,
 // so the board visually fills with color the way an open-play session fills with people.
-const COURT_COLORS = [
+const COURT_COLORS: CourtColor[] = [
   { name: "Papaya", bg: "#FF7A45", soft: "#FFE7DA" },
   { name: "Guava", bg: "#FF4D8D", soft: "#FFDCE9" },
   { name: "Ube", bg: "#7C5CFF", soft: "#E6E0FF" },
@@ -27,14 +54,23 @@ const BG = "#0B3B3A";
 const CARD = "#FFFFFF";
 const CARD_LINE = "#DCEAE6";
 
-function fmtClock(ms) {
+function fmtClock(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
   const m = Math.floor(s / 60);
   const r = s % 60;
   return `${m}:${r.toString().padStart(2, "0")}`;
 }
 
-const SEED_ROSTER = [
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const SEED_ROSTER: string[] = [
   "Acob",
   "Bryan",
   "Chad",
@@ -47,6 +83,7 @@ const SEED_ROSTER = [
   "Khaye",
   "Ken",
   "Kevin",
+  "Kleo",
   "Mac",
   "Rose",
   "Roy",
@@ -57,31 +94,37 @@ const SEED_ROSTER = [
 ].sort();
 
 export default function App() {
-  const [numCourts, setNumCourts] = useState(4);
-  const [courts, setCourts] = useState(Array(4).fill(null)); // { ids: [id,...], color, startedAt }
-  const [roster, setRoster] = useState(() =>
+  const [numCourts, setNumCourts] = useState<number>(2);
+  const [courts, setCourts] = useState<Court[]>(Array(2).fill(null));
+  const [roster, setRoster] = useState<Player[]>(() =>
     SEED_ROSTER.map((name, i) => ({ id: i + 1, name })),
   );
-  const [queueIds, setQueueIds] = useState([]);
-  const [rosterInput, setRosterInput] = useState("");
-  const [requeue, setRequeue] = useState(true);
-  const [tick, setTick] = useState(Date.now());
-  const idRef = useRef(SEED_ROSTER.length + 1);
-  const colorRef = useRef(0);
+  const [queueIds, setQueueIds] = useState<number[]>([]);
+  const [rosterInput, setRosterInput] = useState<string>("");
+  const [requeue, setRequeue] = useState<boolean>(true);
+  const [tick, setTick] = useState<number>(Date.now());
+  const idRef = useRef<number>(SEED_ROSTER.length + 1);
+  const colorRef = useRef<number>(0);
+  const [playerStats, setPlayerStats] = useState<Record<number, PlayerStats>>(
+    {},
+  );
+  const gameRef = useRef<number>(0);
 
   useEffect(() => {
     const t = setInterval(() => setTick(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const nameOf = (id) => roster.find((r) => r.id === id)?.name || "—";
-  const playingIds = new Set(courts.flatMap((c) => (c ? c.ids : [])));
-  const waitingSet = new Set(queueIds);
+  const nameOf = (id: number): string =>
+    roster.find((r) => r.id === id)?.name || "—";
+
+  const playingIds = new Set<number>(courts.flatMap((c) => (c ? c.ids : [])));
+  const waitingSet = new Set<number>(queueIds);
   const available = roster.filter(
     (r) => !playingIds.has(r.id) && !waitingSet.has(r.id),
   );
 
-  const addRosterMember = (e) => {
+  const addRosterMember = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const name = rosterInput.trim();
     if (!name) return;
@@ -89,7 +132,7 @@ export default function App() {
     setRosterInput("");
   };
 
-  const removeRosterMember = (id) => {
+  const removeRosterMember = (id: number) => {
     setRoster((r) => r.filter((p) => p.id !== id));
     setQueueIds((q) => q.filter((qid) => qid !== id));
     setCourts((c) =>
@@ -99,16 +142,20 @@ export default function App() {
           : court,
       ),
     );
+    setPlayerStats((prev) => {
+      const { [id]: _, ...rest } = prev; // eslint-disable-line @typescript-eslint/no-unused-vars
+      return rest;
+    });
   };
 
-  const checkIn = (id) => {
+  const checkIn = (id: number) => {
     setQueueIds((q) => (q.includes(id) ? q : [...q, id]));
   };
 
-  const removeFromQueue = (id) =>
+  const removeFromQueue = (id: number) =>
     setQueueIds((q) => q.filter((qid) => qid !== id));
 
-  const moveQueue = (id, dir) => {
+  const moveQueue = (id: number, dir: 1 | -1) => {
     setQueueIds((q) => {
       const i = q.indexOf(id);
       const j = i + dir;
@@ -119,33 +166,59 @@ export default function App() {
     });
   };
 
-  const assignToCourt = (idx) => {
+  const assignToCourt = (idx: number) => {
     if (queueIds.length < 1) return;
-    const group = queueIds.slice(0, 4);
-    const rest = queueIds.slice(4);
+
+    // Randomize first so ties (same matches, same lastGame) break randomly,
+    // then stable-sort by fewest matches, then longest since their last game.
+    const withStats = shuffle(queueIds).map((id) => ({
+      id,
+      stats: playerStats[id] ?? { matches: 0, lastGame: 0 },
+    }));
+    withStats.sort((a, b) => {
+      if (a.stats.matches !== b.stats.matches)
+        return a.stats.matches - b.stats.matches;
+      return a.stats.lastGame - b.stats.lastGame;
+    });
+
+    const group = withStats.slice(0, 4).map((p) => p.id);
+    const groupSet = new Set(group);
+    const rest = queueIds.filter((id) => !groupSet.has(id)); // keep original queue order for those left
+
     const color = COURT_COLORS[colorRef.current % COURT_COLORS.length];
     colorRef.current += 1;
+    gameRef.current += 1;
+    const gameNumber = gameRef.current;
+
     setQueueIds(rest);
     setCourts((c) => {
       const copy = [...c];
       copy[idx] = { ids: group, color, startedAt: Date.now() };
       return copy;
     });
+    setPlayerStats((prev) => {
+      const next = { ...prev };
+      group.forEach((id) => {
+        const existing = next[id] ?? { matches: 0, lastGame: 0 };
+        next[id] = { matches: existing.matches + 1, lastGame: gameNumber };
+      });
+      return next;
+    });
   };
 
-  const finishGame = (idx) => {
+  const finishGame = (idx: number) => {
+    const court = courts[idx];
     setCourts((c) => {
-      const court = c[idx];
-      if (court && requeue) {
-        setQueueIds((q) => [...q, ...court.ids]);
-      }
       const copy = [...c];
       copy[idx] = null;
       return copy;
     });
+    if (court && requeue) {
+      setQueueIds((q) => [...q, ...court.ids]);
+    }
   };
 
-  const changeCourtCount = (delta) => {
+  const changeCourtCount = (delta: number) => {
     setNumCourts((n) => {
       const next = Math.min(10, Math.max(1, n + delta));
       setCourts((c) => {
@@ -460,10 +533,7 @@ export default function App() {
                   <li
                     key={id}
                     className="flex items-center gap-2 rounded-lg px-2 py-1.5"
-                    style={{
-                      background: i < nextUp.length ? "#FFF6E5" : "transparent",
-                      border: `1px solid ${i < nextUp.length ? "#FFE1A3" : CARD_LINE}`,
-                    }}
+                    style={{ border: `1px solid ${CARD_LINE}` }}
                   >
                     <span
                       className="kq-mono text-xs w-4 text-right"
@@ -527,6 +597,66 @@ export default function App() {
                 </div>
               </div>
             )}
+            <div
+              className="rounded-2xl p-4 h-fit mt-5"
+              style={{ background: CARD }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span
+                  className="kq-display font-semibold flex items-center gap-1.5"
+                  style={{ color: INK }}
+                >
+                  <Users size={16} /> Player Stats
+                </span>
+                <span
+                  className="kq-mono text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: "#EFEBE0", color: INK_SOFT }}
+                >
+                  Game {gameRef.current}
+                </span>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ color: INK_SOFT }} className="text-left">
+                    <th className="font-medium pb-2">Name</th>
+                    <th className="font-medium pb-2 text-center">Matches</th>
+                    <th className="font-medium pb-2 text-right">Last Game</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...roster]
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((p) => {
+                      const stats = playerStats[p.id] ?? {
+                        matches: 0,
+                        lastGame: 0,
+                      };
+                      return (
+                        <tr
+                          key={p.id}
+                          style={{ borderTop: `1px solid ${CARD_LINE}` }}
+                        >
+                          <td className="py-1.5" style={{ color: INK }}>
+                            {p.name}
+                          </td>
+                          <td
+                            className="py-1.5 text-center kq-mono"
+                            style={{ color: INK }}
+                          >
+                            {stats.matches}
+                          </td>
+                          <td
+                            className="py-1.5 text-right kq-mono"
+                            style={{ color: INK_SOFT }}
+                          >
+                            {stats.lastGame > 0 ? `#${stats.lastGame}` : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
