@@ -2,6 +2,30 @@ import { History } from "lucide-react";
 import { MatchRecord, CARD, CARD_LINE, INK, INK_SOFT } from "../types";
 import { fmtClock } from "../utils";
 
+function TeamChips({
+  ids,
+  nameOf,
+  soft,
+}: {
+  ids: number[];
+  nameOf: (id: number) => string;
+  soft: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {ids.map((id) => (
+        <span
+          key={id}
+          className="text-xs px-2 py-0.5 rounded-lg font-medium"
+          style={{ background: soft, color: INK }}
+        >
+          {nameOf(id)}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function MatchHistoryPanel({
   matches,
   nameOf,
@@ -41,7 +65,7 @@ export function MatchHistoryPanel({
               className="rounded-lg p-3"
               style={{ border: `1px solid ${CARD_LINE}` }}
             >
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-2">
                 <span
                   className="kq-mono text-xs font-semibold"
                   style={{ color: m.color.bg }}
@@ -54,16 +78,16 @@ export function MatchHistoryPanel({
                     : "In progress"}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {m.playerIds.map((id) => (
-                  <span
-                    key={id}
-                    className="text-xs px-2 py-0.5 rounded-lg font-medium"
-                    style={{ background: m.color.soft, color: INK }}
-                  >
-                    {nameOf(id)}
-                  </span>
-                ))}
+
+              <div className="flex items-center gap-2">
+                <TeamChips ids={m.teamA} nameOf={nameOf} soft={m.color.soft} />
+                <span
+                  className="kq-mono text-xs font-bold shrink-0"
+                  style={{ color: INK_SOFT }}
+                >
+                  vs
+                </span>
+                <TeamChips ids={m.teamB} nameOf={nameOf} soft={m.color.soft} />
               </div>
             </li>
           ))}

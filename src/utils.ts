@@ -43,14 +43,14 @@ export function loadSaved(): any {
 }
 
 export function bestTeamSplit(
-  ids: number[],
+  group: number[],
   levelOf: (id: number) => PlayerLevel,
 ): { teamA: number[]; teamB: number[]; imbalance: number } {
-  if (ids.length !== 4) {
-    return { teamA: ids.slice(0, 2), teamB: ids.slice(2, 4), imbalance: 0 };
+  if (group.length !== 4) {
+    return { teamA: group.slice(0, 2), teamB: group.slice(2, 4), imbalance: 0 };
   }
-  const [a, b, c, d] = ids;
-  const pairings: [number[], number[]][] = [
+  const [a, b, c, d] = group;
+  const splits: [number[], number[]][] = [
     [
       [a, b],
       [c, d],
@@ -64,23 +64,23 @@ export function bestTeamSplit(
       [b, c],
     ],
   ];
-  let best = pairings[0];
-  let bestDiff = Infinity;
-  for (const [teamA, teamB] of pairings) {
-    const wA = teamA.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
-    const wB = teamB.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
-    const diff = Math.abs(wA - wB);
-    if (diff < bestDiff) {
-      bestDiff = diff;
+  let best = splits[0];
+  let bestImbalance = Infinity;
+  for (const [teamA, teamB] of splits) {
+    const sumA = teamA.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
+    const sumB = teamB.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
+    const imbalance = Math.abs(sumA - sumB);
+    if (imbalance < bestImbalance) {
+      bestImbalance = imbalance;
       best = [teamA, teamB];
     }
   }
-  return { teamA: best[0], teamB: best[1], imbalance: bestDiff };
+  return { teamA: best[0], teamB: best[1], imbalance: bestImbalance };
 }
 
 export function levelDiversity(
-  ids: number[],
+  group: number[],
   levelOf: (id: number) => PlayerLevel,
 ): number {
-  return new Set(ids.map((id) => levelOf(id))).size;
+  return new Set(group.map((id) => levelOf(id))).size;
 }

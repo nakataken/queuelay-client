@@ -37,7 +37,7 @@ export function Queue() {
     saved?.roster ??
       SEED_ROSTER.map((p, i) => ({ id: i + 1, name: p.name, level: p.level })),
   );
-  const [rosterLevel, setRosterLevel] = useState<PlayerLevel>("B");
+  const [rosterLevel, setRosterLevel] = useState<PlayerLevel>("A");
   const [queueIds, setQueueIds] = useState<number[]>(saved?.queueIds ?? []);
   const [rosterInput, setRosterInput] = useState<string>("");
   const [requeue, setRequeue] = useState<boolean>(saved?.requeue ?? true);
@@ -120,7 +120,12 @@ export function Queue() {
     setQueueIds((q) => shuffle(q));
   };
 
-  const finalizeAssignment = (idx: number, group: number[]) => {
+  const finalizeAssignment = (
+    idx: number,
+    teamA: number[],
+    teamB: number[],
+  ) => {
+    const group = [...teamA, ...teamB];
     const groupSet = new Set(group);
     const rest = queueIds.filter((id) => !groupSet.has(id));
     const color = COURT_COLORS[colorRef.current % COURT_COLORS.length];
@@ -128,14 +133,13 @@ export function Queue() {
     gameRef.current += 1;
     const gameNumber = gameRef.current;
     const startedAt = Date.now();
-    const { teamA, teamB } = bestTeamSplit(group, levelOf);
 
     setQueueIds(rest);
     setCourts((c) => {
       const copy = [...c];
       copy[idx] = {
         ids: group,
-        teams: [teamA, teamB],
+        teams: { teamA, teamB },
         color,
         startedAt,
         gameNumber,
@@ -156,7 +160,8 @@ export function Queue() {
       {
         gameNumber,
         courtIndex: idx,
-        playerIds: group,
+        teamA,
+        teamB,
         color,
         startedAt,
         finishedAt: null,
@@ -178,10 +183,9 @@ export function Queue() {
     });
 
     if (withStats.length <= 4) {
-      finalizeAssignment(
-        idx,
-        withStats.map((p) => p.id),
-      );
+      const group = withStats.map((p) => p.id);
+      const split = bestTeamSplit(group, levelOf);
+      finalizeAssignment(idx, split.teamA, split.teamB);
       return;
     }
 
@@ -216,7 +220,8 @@ export function Queue() {
       }
     }
 
-    finalizeAssignment(idx, bestGroup);
+    const split = bestTeamSplit(bestGroup, levelOf);
+    finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
   const finishGame = (idx: number) => {
@@ -371,7 +376,9 @@ export function Queue() {
           <div className="flex flex-col gap-5">
             <MatchHistoryPanel matches={matches} nameOf={nameOf} />
             <PlayerStatsPanel
-              roster={roster}
+              roster={roster.filter(
+                (p) => playingIds.has(p.id) || waitingSet.has(p.id),
+              )}
               playerStats={playerStats}
               gameCount={gameRef.current}
             />

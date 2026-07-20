@@ -12,11 +12,12 @@ export interface CourtColor {
 
 export interface ActiveCourt {
   ids: number[];
-  teams: [number[], number[]]; // NEW — the two paired-up teams
+  teams: { teamA: number[]; teamB: number[] };
   color: CourtColor;
   startedAt: number;
   gameNumber: number;
 }
+
 export type Court = ActiveCourt | null;
 
 export interface PlayerStats {
@@ -68,41 +69,40 @@ export const BG = "#0B3B3A";
 export const CARD = "#FFFFFF";
 export const CARD_LINE = "#DCEAE6";
 
-export const SEED_ROSTER: SeedPlayer[] = [
-  { name: "Acob", level: "B" },
-  { name: "Bryan", level: "B" },
-  { name: "Chad", level: "B" },
-  { name: "Chacha", level: "B" },
-  { name: "Clarissa", level: "B" },
-  { name: "Dan", level: "B" },
-  { name: "Irish", level: "B" },
-  { name: "Jiemuel", level: "B" },
-  { name: "Osong", level: "B" },
-  { name: "Khaye", level: "B" },
-  { name: "Ken", level: "B" },
-  { name: "Kevin", level: "B" },
-  { name: "Mac", level: "B" },
-  { name: "Rose", level: "B" },
-  { name: "Roy", level: "B" },
-  { name: "Ryan", level: "B" },
-  { name: "Sandee", level: "B" },
-  { name: "Topher", level: "B" },
-  { name: "Trixie", level: "B" },
-].sort((a, b) => a.name.localeCompare(b.name));
+const RAW_ROSTER: SeedPlayer[] = [
+  { name: "Acob", level: "A" },
+  { name: "Bryan", level: "A" },
+  { name: "Chad", level: "A" },
+  { name: "Chacha", level: "A" },
+  { name: "Clarissa", level: "A" },
+  { name: "Dan", level: "A" },
+  { name: "Irish", level: "A" },
+  { name: "Jiemuel", level: "A" },
+  { name: "Osong", level: "A" },
+  { name: "Khaye", level: "A" },
+  { name: "Ken", level: "A" },
+  { name: "Kevin", level: "A" },
+  { name: "Mac", level: "A" },
+  { name: "Rose", level: "A" },
+  { name: "Roy", level: "A" },
+  { name: "Ryan", level: "A" },
+  { name: "Sandee", level: "A" },
+  { name: "Topher", level: "A" },
+  { name: "Trixie", level: "A" },
+];
+
+export const SEED_ROSTER: SeedPlayer[] = [...RAW_ROSTER].sort((a, b) =>
+  a.name.localeCompare(b.name),
+);
 
 export const STORAGE_KEY = "queuelay:v1";
-export interface ActiveCourt {
-  ids: number[];
-  color: CourtColor;
-  startedAt: number;
-  gameNumber: number; // NEW — links this court to its MatchRecord
-}
 
 export interface MatchRecord {
   gameNumber: number;
   courtIndex: number;
-  playerIds: number[];
+  teamA: number[]; // 2 player ids
+  teamB: number[]; // 2 player ids
   color: CourtColor;
   startedAt: number;
-  finishedAt: number | null; // null while still in progress
+  finishedAt: number | null;
 }
