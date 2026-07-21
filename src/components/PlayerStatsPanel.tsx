@@ -31,6 +31,8 @@ export function PlayerStatsPanel({
           <tr style={{ color: INK_SOFT }} className="text-left">
             <th className="font-medium pb-2">Name</th>
             <th className="font-medium pb-2 text-center">Matches</th>
+            <th className="font-medium pb-2 text-center">W</th>
+            <th className="font-medium pb-2 text-center">L</th>
             <th className="font-medium pb-2 text-right">Last Game</th>
           </tr>
         </thead>
@@ -49,6 +51,18 @@ export function PlayerStatsPanel({
                     style={{ color: INK }}
                   >
                     {stats.matches}
+                  </td>
+                  <td
+                    className="py-1.5 text-center kq-mono"
+                    style={{ color: "#1B8A4A" }}
+                  >
+                    {stats.wins}
+                  </td>
+                  <td
+                    className="py-1.5 text-center kq-mono"
+                    style={{ color: "#B4483A" }}
+                  >
+                    {stats.losses}
                   </td>
                   <td
                     className="py-1.5 text-right kq-mono"

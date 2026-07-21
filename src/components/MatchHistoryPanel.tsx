@@ -80,14 +80,44 @@ export function MatchHistoryPanel({
               </div>
 
               <div className="flex items-center gap-2">
-                <TeamChips ids={m.teamA} nameOf={nameOf} soft={m.color.soft} />
-                <span
-                  className="kq-mono text-xs font-bold shrink-0"
-                  style={{ color: INK_SOFT }}
-                >
-                  vs
-                </span>
-                <TeamChips ids={m.teamB} nameOf={nameOf} soft={m.color.soft} />
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-center gap-1">
+                    <TeamChips
+                      ids={m.teamA}
+                      nameOf={nameOf}
+                      soft={m.color.soft}
+                    />
+                    {m.winner === "A" && (
+                      <span
+                        className="text-[10px] font-bold"
+                        style={{ color: "#1B8A4A" }}
+                      >
+                        WON
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    className="kq-mono text-xs font-bold shrink-0"
+                    style={{ color: INK_SOFT }}
+                  >
+                    vs
+                  </span>
+                  <div className="flex flex-col items-center gap-1">
+                    <TeamChips
+                      ids={m.teamB}
+                      nameOf={nameOf}
+                      soft={m.color.soft}
+                    />
+                    {m.winner === "B" && (
+                      <span
+                        className="text-[10px] font-bold"
+                        style={{ color: "#1B8A4A" }}
+                      >
+                        WON
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             </li>
           ))}

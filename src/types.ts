@@ -23,6 +23,8 @@ export type Court = ActiveCourt | null;
 export interface PlayerStats {
   matches: number;
   lastGame: number; // 0 = never played
+  wins: number;
+  losses: number;
 }
 
 export type PlayerLevel = "A" | "B" | "C";
@@ -100,9 +102,10 @@ export const STORAGE_KEY = "queuelay:v1";
 export interface MatchRecord {
   gameNumber: number;
   courtIndex: number;
-  teamA: number[]; // 2 player ids
-  teamB: number[]; // 2 player ids
+  teamA: number[];
+  teamB: number[];
   color: CourtColor;
   startedAt: number;
   finishedAt: number | null;
+  winner: "A" | "B" | null; // null = no winner recorded / still in progress
 }

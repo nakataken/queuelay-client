@@ -20,7 +20,7 @@ export function CourtsPanel({
   requeue: boolean;
   setRequeue: (v: boolean) => void;
   onAssignToCourt: (idx: number) => void;
-  onFinishGame: (idx: number) => void;
+  onFinishGame: (idx: number, winner: "A" | "B") => void;
   nameOf: (id: number) => string;
   levelOf: (id: number) => PlayerLevel;
 }) {
@@ -141,13 +141,22 @@ export function CourtsPanel({
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => onFinishGame(idx)}
-                    className="kq-btn w-full rounded-lg py-2 text-sm font-semibold"
-                    style={{ background: INK, color: "#fff" }}
-                  >
-                    Finish game
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onFinishGame(idx, "A")}
+                      className="kq-btn flex-1 rounded-lg py-2 text-xs sm:text-sm font-semibold"
+                      style={{ background: INK, color: "#fff" }}
+                    >
+                      Left won
+                    </button>
+                    <button
+                      onClick={() => onFinishGame(idx, "B")}
+                      className="kq-btn flex-1 rounded-lg py-2 text-xs sm:text-sm font-semibold"
+                      style={{ background: INK, color: "#fff" }}
+                    >
+                      Right won
+                    </button>
+                  </div>
                 </div>
               </>
             ) : (

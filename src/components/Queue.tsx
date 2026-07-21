@@ -150,11 +150,21 @@ export function Queue() {
     setPlayerStats((prev) => {
       const next = { ...prev };
       group.forEach((id) => {
-        const existing = next[id] ?? { matches: 0, lastGame: 0 };
-        next[id] = { matches: existing.matches + 1, lastGame: gameNumber };
+        const existing = next[id] ?? {
+          matches: 0,
+          lastGame: 0,
+          wins: 0,
+          losses: 0,
+        };
+        next[id] = {
+          ...existing,
+          matches: existing.matches + 1,
+          lastGame: gameNumber,
+        };
       });
       return next;
     });
+
     setMatches((prev) => [
       ...prev,
       {
@@ -165,6 +175,7 @@ export function Queue() {
         color,
         startedAt,
         finishedAt: null,
+        winner: null,
       },
     ]);
   };
@@ -174,8 +185,9 @@ export function Queue() {
 
     const withStats = queueIds.map((id) => ({
       id,
-      stats: playerStats[id] ?? { matches: 0, lastGame: 0 },
+      stats: playerStats[id] ?? { matches: 0, lastGame: 0, wins: 0, losses: 0 },
     }));
+
     withStats.sort((a, b) => {
       if (a.stats.matches !== b.stats.matches)
         return a.stats.matches - b.stats.matches;
@@ -224,7 +236,7 @@ export function Queue() {
     finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
-  const finishGame = (idx: number) => {
+  const finishGame = (idx: number, winner: "A" | "B") => {
     const court = courts[idx];
     setCourts((c) => {
       const copy = [...c];
@@ -235,10 +247,34 @@ export function Queue() {
       setQueueIds((q) => [...q, ...court.ids]);
     }
     if (court) {
+      const winningIds = winner === "A" ? court.teams.teamA : court.teams.teamB;
+      const losingIds = winner === "A" ? court.teams.teamB : court.teams.teamA;
+      setPlayerStats((prev) => {
+        const next = { ...prev };
+        winningIds.forEach((id) => {
+          const existing = next[id] ?? {
+            matches: 0,
+            lastGame: 0,
+            wins: 0,
+            losses: 0,
+          };
+          next[id] = { ...existing, wins: existing.wins + 1 };
+        });
+        losingIds.forEach((id) => {
+          const existing = next[id] ?? {
+            matches: 0,
+            lastGame: 0,
+            wins: 0,
+            losses: 0,
+          };
+          next[id] = { ...existing, losses: existing.losses + 1 };
+        });
+        return next;
+      });
       setMatches((prev) =>
         prev.map((m) =>
           m.gameNumber === court.gameNumber
-            ? { ...m, finishedAt: Date.now() }
+            ? { ...m, finishedAt: Date.now(), winner }
             : m,
         ),
       );
