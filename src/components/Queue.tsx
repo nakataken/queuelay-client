@@ -125,7 +125,12 @@ export function Queue() {
   };
 
   const shuffleQueue = () => {
-    setQueueIds((q) => shuffle(q));
+    setQueueIds((q) => {
+      const group = pickNextGroup(q, playerStats, levelOf, matchMode, resultOf);
+      const groupSet = new Set(group);
+      const rest = shuffle(q.filter((id) => !groupSet.has(id)));
+      return [...shuffle(group), ...rest];
+    });
   };
 
   const finalizeAssignment = (
