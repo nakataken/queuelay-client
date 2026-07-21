@@ -74,7 +74,7 @@ export function Queue() {
   const available = roster.filter(
     (r) => !playingIds.has(r.id) && !waitingSet.has(r.id),
   );
-  const notPlaying = roster.filter((r) => !playingIds.has(r.id));
+  const waitingPlayers = roster.filter((r) => waitingSet.has(r.id));
 
   const addRosterMember = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -463,7 +463,7 @@ export function Queue() {
               onFinishGame={finishGame}
               onShuffleCourt={shuffleCourtTeams}
               onManualAssign={manualAssign}
-              notPlaying={notPlaying}
+              waitingPlayers={waitingPlayers}
               nameOf={nameOf}
               levelOf={levelOf}
             />

@@ -14,7 +14,7 @@ export function CourtsPanel({
   onFinishGame,
   onShuffleCourt,
   onManualAssign,
-  notPlaying,
+  waitingPlayers,
   nameOf,
   levelOf,
 }: {
@@ -27,7 +27,7 @@ export function CourtsPanel({
   onFinishGame: (idx: number, winner: "A" | "B") => void;
   onShuffleCourt: (idx: number) => void;
   onManualAssign: (idx: number, ids: number[]) => void;
-  notPlaying: Player[];
+  waitingPlayers: Player[];
   nameOf: (id: number) => string;
   levelOf: (id: number) => PlayerLevel;
 }) {
@@ -204,7 +204,7 @@ export function CourtsPanel({
                 {pickerOpenIdx === idx ? (
                   <div className="w-full">
                     <div className="flex flex-wrap gap-1.5 justify-center mb-2 max-h-28 overflow-y-auto">
-                      {notPlaying.map((p) => (
+                      {waitingPlayers.map((p) => (
                         <button
                           key={p.id}
                           onClick={() => toggleSelected(p.id)}
@@ -269,7 +269,7 @@ export function CourtsPanel({
                     </button>
                     <button
                       onClick={() => setPickerOpenIdx(idx)}
-                      disabled={notPlaying.length === 0}
+                      disabled={waitingPlayers.length === 0}
                       className="kq-btn rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-40"
                       style={{
                         background: "rgba(255,255,255,0.15)",
