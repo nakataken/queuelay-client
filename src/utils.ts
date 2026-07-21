@@ -1,4 +1,10 @@
-import { PlayerLevel, LEVEL_WEIGHT, STORAGE_KEY, MatchMode } from "./types";
+import {
+  PlayerLevel,
+  LEVEL_WEIGHT,
+  STORAGE_KEY,
+  MatchMode,
+  PlayerStats,
+} from "./types";
 
 export function fmtClock(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -113,4 +119,70 @@ export function groupScore(
   }
   // mixed: prefer variety across the group (current default behavior)
   return new Set(group.map((id) => levelOf(id))).size;
+}
+
+export function pickNextGroup(
+  queueIds: number[],
+  playerStats: Record<number, PlayerStats>,
+  levelOf: (id: number) => PlayerLevel,
+  mode: MatchMode,
+  resultOf: (id: number) => "W" | "L" | null,
+): number[] {
+  if (queueIds.length < 1) return [];
+
+  const withStats = queueIds.map((id) => ({
+    id,
+    stats: playerStats[id] ?? {
+      matches: 0,
+      lastGame: 0,
+      wins: 0,
+      losses: 0,
+      lastResult: null,
+    },
+  }));
+  withStats.sort((a, b) => {
+    if (a.stats.matches !== b.stats.matches)
+      return a.stats.matches - b.stats.matches;
+    return a.stats.lastGame - b.stats.lastGame;
+  });
+
+  if (withStats.length <= 4) {
+    return withStats.map((p) => p.id);
+  }
+
+  const cutoffMatches = withStats[3].stats.matches;
+  const mandatory = withStats
+    .filter((p) => p.stats.matches < cutoffMatches)
+    .map((p) => p.id);
+  const flexPool = withStats
+    .filter((p) => p.stats.matches === cutoffMatches)
+    .map((p) => p.id)
+    .slice(0, 10);
+  const flexSlots = 4 - mandatory.length;
+
+  const scoreCandidate = (group: number[]) => ({
+    group: groupScore(group, levelOf, mode, resultOf),
+    split: bestTeamSplit(group, levelOf, mode, resultOf).score,
+  });
+
+  const primaryFirst = mode !== "mixed";
+
+  let bestGroup = [...mandatory, ...flexPool.slice(0, flexSlots)];
+  let bestScore = scoreCandidate(bestGroup);
+
+  for (const combo of combinations(flexPool, flexSlots)) {
+    const candidate = [...mandatory, ...combo];
+    const score = scoreCandidate(candidate);
+    const better = primaryFirst
+      ? score.group > bestScore.group ||
+        (score.group === bestScore.group && score.split > bestScore.split)
+      : score.split > bestScore.split ||
+        (score.split === bestScore.split && score.group > bestScore.group);
+    if (better) {
+      bestScore = score;
+      bestGroup = candidate;
+    }
+  }
+
+  return bestGroup;
 }

@@ -11,13 +11,7 @@ import {
   BG,
   MatchMode,
 } from "../types";
-import {
-  shuffle,
-  combinations,
-  bestTeamSplit,
-  groupScore,
-  loadSaved,
-} from "../utils";
+import { shuffle, bestTeamSplit, loadSaved, pickNextGroup } from "../utils";
 import { ModeSelector } from "../components/ModeSelector";
 import { Header } from "./Header";
 import { AvailablePanel } from "./AvailablePanel";
@@ -189,71 +183,15 @@ export function Queue() {
   };
 
   const assignToCourt = (idx: number) => {
-    if (queueIds.length < 1) return;
-
-    const withStats = queueIds.map((id) => ({
-      id,
-      stats: playerStats[id] ?? {
-        matches: 0,
-        lastGame: 0,
-        wins: 0,
-        losses: 0,
-        lastResult: null,
-      },
-    }));
-    withStats.sort((a, b) => {
-      if (a.stats.matches !== b.stats.matches)
-        return a.stats.matches - b.stats.matches;
-      return a.stats.lastGame - b.stats.lastGame;
-    });
-
-    const splitFor = (group: number[]) =>
-      bestTeamSplit(group, levelOf, matchMode, resultOf);
-
-    if (withStats.length <= 4) {
-      const group = withStats.map((p) => p.id);
-      const split = splitFor(group);
-      finalizeAssignment(idx, split.teamA, split.teamB);
-      return;
-    }
-
-    const cutoffMatches = withStats[3].stats.matches;
-    const mandatory = withStats
-      .filter((p) => p.stats.matches < cutoffMatches)
-      .map((p) => p.id);
-    const flexPool = withStats
-      .filter((p) => p.stats.matches === cutoffMatches)
-      .map((p) => p.id)
-      .slice(0, 10);
-    const flexSlots = 4 - mandatory.length;
-
-    const scoreCandidate = (group: number[]) => ({
-      group: groupScore(group, levelOf, matchMode, resultOf),
-      split: splitFor(group).score,
-    });
-
-    // "competitive" and "winloss" care most about WHICH 4 are grouped together;
-    // "mixed" cares most about how evenly the chosen 4 split into two teams.
-    const primaryFirst = matchMode !== "mixed";
-
-    let bestGroup = [...mandatory, ...flexPool.slice(0, flexSlots)];
-    let bestScore = scoreCandidate(bestGroup);
-
-    for (const combo of combinations(flexPool, flexSlots)) {
-      const candidate = [...mandatory, ...combo];
-      const score = scoreCandidate(candidate);
-      const better = primaryFirst
-        ? score.group > bestScore.group ||
-          (score.group === bestScore.group && score.split > bestScore.split)
-        : score.split > bestScore.split ||
-          (score.split === bestScore.split && score.group > bestScore.group);
-      if (better) {
-        bestScore = score;
-        bestGroup = candidate;
-      }
-    }
-
-    const split = splitFor(bestGroup);
+    const group = pickNextGroup(
+      queueIds,
+      playerStats,
+      levelOf,
+      matchMode,
+      resultOf,
+    );
+    if (group.length < 1) return;
+    const split = bestTeamSplit(group, levelOf, matchMode, resultOf);
     finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
@@ -373,7 +311,14 @@ export function Queue() {
     gameRef.current = 0;
   };
 
-  const nextUp = queueIds.slice(0, 4);
+  const nextUp = pickNextGroup(
+    queueIds,
+    playerStats,
+    levelOf,
+    matchMode,
+    resultOf,
+  );
+
   const openCourtExists = courts.some((c) => !c);
 
   useEffect(() => {
