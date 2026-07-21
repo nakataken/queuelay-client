@@ -73,7 +73,7 @@ export function CourtsPanel({
                         className="absolute left-1 right-1 top-1/2 h-px"
                         style={{ background: "rgba(255,255,255,0.4)" }}
                       />
-                      {courts[0]?.teams.teamA.map((id) => (
+                      {court.teams.teamA.map((id) => (
                         <span
                           key={id}
                           className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold z-10"
@@ -128,7 +128,7 @@ export function CourtsPanel({
                         className="absolute left-1 right-1 top-1/2 h-px"
                         style={{ background: "rgba(255,255,255,0.4)" }}
                       />
-                      {courts[0]?.teams.teamB.map((id) => (
+                      {court.teams.teamB.map((id) => (
                         <span
                           key={id}
                           className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold z-10"
