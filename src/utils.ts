@@ -129,6 +129,7 @@ export function pickNextGroup(
   resultOf: (id: number) => "W" | "L" | null,
 ): number[] {
   if (queueIds.length < 1) return [];
+  const activeMode = effectiveMode(queueIds, mode, resultOf);
 
   const withStats = queueIds.map((id) => ({
     id,
@@ -161,11 +162,11 @@ export function pickNextGroup(
   const flexSlots = 4 - mandatory.length;
 
   const scoreCandidate = (group: number[]) => ({
-    group: groupScore(group, levelOf, mode, resultOf),
-    split: bestTeamSplit(group, levelOf, mode, resultOf).score,
+    group: groupScore(group, levelOf, activeMode, resultOf),
+    split: bestTeamSplit(group, levelOf, activeMode, resultOf).score,
   });
 
-  const primaryFirst = mode !== "mixed";
+  const primaryFirst = activeMode !== "mixed";
 
   let bestGroup = [...mandatory, ...flexPool.slice(0, flexSlots)];
   let bestScore = scoreCandidate(bestGroup);
@@ -185,4 +186,14 @@ export function pickNextGroup(
   }
 
   return bestGroup;
+}
+
+export function effectiveMode(
+  queueIds: number[],
+  mode: MatchMode,
+  resultOf: (id: number) => "W" | "L" | null,
+): MatchMode {
+  if (mode !== "winloss") return mode;
+  const hasAnyRecord = queueIds.some((id) => resultOf(id) !== null);
+  return hasAnyRecord ? "winloss" : "mixed";
 }

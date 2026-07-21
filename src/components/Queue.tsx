@@ -11,7 +11,13 @@ import {
   BG,
   MatchMode,
 } from "../types";
-import { shuffle, bestTeamSplit, loadSaved, pickNextGroup } from "../utils";
+import {
+  shuffle,
+  bestTeamSplit,
+  loadSaved,
+  pickNextGroup,
+  effectiveMode,
+} from "../utils";
 import { ModeSelector } from "../components/ModeSelector";
 import { Header } from "./Header";
 import { AvailablePanel } from "./AvailablePanel";
@@ -191,7 +197,8 @@ export function Queue() {
       resultOf,
     );
     if (group.length < 1) return;
-    const split = bestTeamSplit(group, levelOf, matchMode, resultOf);
+    const activeMode = effectiveMode(group, matchMode, resultOf);
+    const split = bestTeamSplit(group, levelOf, activeMode, resultOf);
     finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
