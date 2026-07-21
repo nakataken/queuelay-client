@@ -9,14 +9,16 @@ import {
   STORAGE_KEY,
   LEVEL_CYCLE,
   BG,
+  MatchMode,
 } from "../types";
 import {
   shuffle,
   combinations,
   bestTeamSplit,
-  levelDiversity,
+  groupScore,
   loadSaved,
 } from "../utils";
+import { ModeSelector } from "../components/ModeSelector";
 import { Header } from "./Header";
 import { AvailablePanel } from "./AvailablePanel";
 import { CourtsPanel } from "./CourtsPanel";
@@ -47,6 +49,9 @@ export function Queue() {
   const [playerStats, setPlayerStats] = useState<Record<number, PlayerStats>>(
     saved?.playerStats ?? {},
   );
+  const [matchMode, setMatchMode] = useState<MatchMode>(
+    saved?.matchMode ?? "mixed",
+  );
   const [matches, setMatches] = useState<MatchRecord[]>(saved?.matches ?? []);
   const [activeTab, setActiveTab] = useState<TabKey>("queue");
 
@@ -61,12 +66,15 @@ export function Queue() {
     roster.find((r) => r.id === id)?.name || "—";
   const levelOf = (id: number): PlayerLevel =>
     roster.find((r) => r.id === id)?.level ?? "B";
+  const resultOf = (id: number): "W" | "L" | null =>
+    playerStats[id]?.lastResult ?? null;
 
   const playingIds = new Set<number>(courts.flatMap((c) => (c ? c.ids : [])));
   const waitingSet = new Set<number>(queueIds);
   const available = roster.filter(
     (r) => !playingIds.has(r.id) && !waitingSet.has(r.id),
   );
+  const notPlaying = roster.filter((r) => !playingIds.has(r.id));
 
   const addRosterMember = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -185,18 +193,26 @@ export function Queue() {
 
     const withStats = queueIds.map((id) => ({
       id,
-      stats: playerStats[id] ?? { matches: 0, lastGame: 0, wins: 0, losses: 0 },
+      stats: playerStats[id] ?? {
+        matches: 0,
+        lastGame: 0,
+        wins: 0,
+        losses: 0,
+        lastResult: null,
+      },
     }));
-
     withStats.sort((a, b) => {
       if (a.stats.matches !== b.stats.matches)
         return a.stats.matches - b.stats.matches;
       return a.stats.lastGame - b.stats.lastGame;
     });
 
+    const splitFor = (group: number[]) =>
+      bestTeamSplit(group, levelOf, matchMode, resultOf);
+
     if (withStats.length <= 4) {
       const group = withStats.map((p) => p.id);
-      const split = bestTeamSplit(group, levelOf);
+      const split = splitFor(group);
       finalizeAssignment(idx, split.teamA, split.teamB);
       return;
     }
@@ -211,28 +227,33 @@ export function Queue() {
       .slice(0, 10);
     const flexSlots = 4 - mandatory.length;
 
-    const scoreGroup = (group: number[]) => ({
-      imbalance: bestTeamSplit(group, levelOf).imbalance,
-      diversity: levelDiversity(group, levelOf),
+    const scoreCandidate = (group: number[]) => ({
+      group: groupScore(group, levelOf, matchMode, resultOf),
+      split: splitFor(group).score,
     });
 
+    // "competitive" and "winloss" care most about WHICH 4 are grouped together;
+    // "mixed" cares most about how evenly the chosen 4 split into two teams.
+    const primaryFirst = matchMode !== "mixed";
+
     let bestGroup = [...mandatory, ...flexPool.slice(0, flexSlots)];
-    let bestScore = scoreGroup(bestGroup);
+    let bestScore = scoreCandidate(bestGroup);
 
     for (const combo of combinations(flexPool, flexSlots)) {
       const candidate = [...mandatory, ...combo];
-      const score = scoreGroup(candidate);
-      if (
-        score.imbalance < bestScore.imbalance ||
-        (score.imbalance === bestScore.imbalance &&
-          score.diversity > bestScore.diversity)
-      ) {
+      const score = scoreCandidate(candidate);
+      const better = primaryFirst
+        ? score.group > bestScore.group ||
+          (score.group === bestScore.group && score.split > bestScore.split)
+        : score.split > bestScore.split ||
+          (score.split === bestScore.split && score.group > bestScore.group);
+      if (better) {
         bestScore = score;
         bestGroup = candidate;
       }
     }
 
-    const split = bestTeamSplit(bestGroup, levelOf);
+    const split = splitFor(bestGroup);
     finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
@@ -257,8 +278,9 @@ export function Queue() {
             lastGame: 0,
             wins: 0,
             losses: 0,
+            lastResult: null,
           };
-          next[id] = { ...existing, wins: existing.wins + 1 };
+          next[id] = { ...existing, wins: existing.wins + 1, lastResult: "W" };
         });
         losingIds.forEach((id) => {
           const existing = next[id] ?? {
@@ -266,8 +288,13 @@ export function Queue() {
             lastGame: 0,
             wins: 0,
             losses: 0,
+            lastResult: null,
           };
-          next[id] = { ...existing, losses: existing.losses + 1 };
+          next[id] = {
+            ...existing,
+            losses: existing.losses + 1,
+            lastResult: "L",
+          };
         });
         return next;
       });
@@ -293,6 +320,31 @@ export function Queue() {
       });
       return next;
     });
+  };
+
+  const shuffleCourtTeams = (idx: number) => {
+    const court = courts[idx];
+    if (!court) return;
+    const shuffled = shuffle(court.ids);
+    const teamA = shuffled.slice(0, 2);
+    const teamB = shuffled.slice(2, 4);
+
+    setCourts((c) => {
+      const copy = [...c];
+      copy[idx] = { ...court, teams: { teamA, teamB } };
+      return copy;
+    });
+    setMatches((prev) =>
+      prev.map((m) =>
+        m.gameNumber === court.gameNumber ? { ...m, teamA, teamB } : m,
+      ),
+    );
+  };
+
+  const manualAssign = (idx: number, selectedIds: number[]) => {
+    if (selectedIds.length !== 4) return;
+    const split = bestTeamSplit(selectedIds, levelOf, matchMode, resultOf);
+    finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
   const resetAll = () => {
@@ -336,6 +388,7 @@ export function Queue() {
           requeue,
           playerStats,
           matches,
+          matchMode,
           nextId: idRef.current,
           colorCounter: colorRef.current,
           gameCounter: gameRef.current,
@@ -374,6 +427,10 @@ export function Queue() {
         />
         <TabBar active={activeTab} onChange={setActiveTab} />
 
+        {activeTab === "queue" && (
+          <ModeSelector mode={matchMode} onChange={setMatchMode} />
+        )}
+
         {activeTab === "queue" ? (
           <div className="flex flex-col gap-5">
             <AvailablePanel
@@ -404,6 +461,9 @@ export function Queue() {
               setRequeue={setRequeue}
               onAssignToCourt={assignToCourt}
               onFinishGame={finishGame}
+              onShuffleCourt={shuffleCourtTeams}
+              onManualAssign={manualAssign}
+              notPlaying={notPlaying}
               nameOf={nameOf}
               levelOf={levelOf}
             />

@@ -1,38 +1,11 @@
-export interface Player {
-  id: number;
-  name: string;
-  level: PlayerLevel;
-}
+// CONST
+export const STORAGE_KEY = "queuelay:v1";
 
-export interface CourtColor {
-  name: string;
-  bg: string;
-  soft: string;
-}
-
-export interface ActiveCourt {
-  ids: number[];
-  teams: { teamA: number[]; teamB: number[] };
-  color: CourtColor;
-  startedAt: number;
-  gameNumber: number;
-}
-
-export type Court = ActiveCourt | null;
-
-export interface PlayerStats {
-  matches: number;
-  lastGame: number; // 0 = never played
-  wins: number;
-  losses: number;
-}
-
-export type PlayerLevel = "A" | "B" | "C";
-
-export interface SeedPlayer {
-  name: string;
-  level: PlayerLevel;
-}
+export const INK = "#0E2A26";
+export const INK_SOFT = "#4E6B65";
+export const BG = "#0B3B3A";
+export const CARD = "#FFFFFF";
+export const CARD_LINE = "#DCEAE6";
 
 export const LEVEL_LABEL: Record<PlayerLevel, string> = {
   A: "Advanced",
@@ -65,12 +38,6 @@ export const COURT_COLORS: CourtColor[] = [
   { name: "Sky", bg: "#1FA3C9", soft: "#D6F0F7" },
 ];
 
-export const INK = "#0E2A26";
-export const INK_SOFT = "#4E6B65";
-export const BG = "#0B3B3A";
-export const CARD = "#FFFFFF";
-export const CARD_LINE = "#DCEAE6";
-
 const RAW_ROSTER: SeedPlayer[] = [
   { name: "Acob", level: "A" },
   { name: "Bryan", level: "A" },
@@ -97,7 +64,52 @@ export const SEED_ROSTER: SeedPlayer[] = [...RAW_ROSTER].sort((a, b) =>
   a.name.localeCompare(b.name),
 );
 
-export const STORAGE_KEY = "queuelay:v1";
+export const MATCH_MODE_LABEL: Record<MatchMode, string> = {
+  mixed: "Mixed",
+  competitive: "Competitive",
+  winloss: "Win/Loss Mix",
+};
+
+// TYPES
+export type PlayerLevel = "A" | "B" | "C";
+
+export type Court = ActiveCourt | null;
+
+export type MatchMode = "mixed" | "competitive" | "winloss";
+
+// INTERFACES
+export interface Player {
+  id: number;
+  name: string;
+  level: PlayerLevel;
+}
+
+export interface PlayerStats {
+  matches: number;
+  lastGame: number;
+  wins: number;
+  losses: number;
+  lastResult: "W" | "L" | null;
+}
+
+export interface SeedPlayer {
+  name: string;
+  level: PlayerLevel;
+}
+
+export interface CourtColor {
+  name: string;
+  bg: string;
+  soft: string;
+}
+
+export interface ActiveCourt {
+  ids: number[];
+  teams: { teamA: number[]; teamB: number[] };
+  color: CourtColor;
+  startedAt: number;
+  gameNumber: number;
+}
 
 export interface MatchRecord {
   gameNumber: number;

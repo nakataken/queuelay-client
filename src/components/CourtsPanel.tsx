@@ -1,7 +1,8 @@
-import { Timer } from "lucide-react";
-import { Court, PlayerLevel, CARD, INK } from "../types";
+import { Timer, Shuffle } from "lucide-react";
+import { Court, PlayerLevel, CARD, INK, Player } from "../types";
 import { fmtClock } from "../utils";
 import { LevelBadge } from "./LevelBadge";
+import { useState } from "react";
 
 export function CourtsPanel({
   courts,
@@ -11,6 +12,9 @@ export function CourtsPanel({
   setRequeue,
   onAssignToCourt,
   onFinishGame,
+  onShuffleCourt,
+  onManualAssign,
+  notPlaying,
   nameOf,
   levelOf,
 }: {
@@ -21,9 +25,25 @@ export function CourtsPanel({
   setRequeue: (v: boolean) => void;
   onAssignToCourt: (idx: number) => void;
   onFinishGame: (idx: number, winner: "A" | "B") => void;
+  onShuffleCourt: (idx: number) => void;
+  onManualAssign: (idx: number, ids: number[]) => void;
+  notPlaying: Player[];
   nameOf: (id: number) => string;
   levelOf: (id: number) => PlayerLevel;
 }) {
+  const [pickerOpenIdx, setPickerOpenIdx] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number[]>([]);
+
+  const toggleSelected = (id: number) => {
+    setSelected((s) =>
+      s.includes(id)
+        ? s.filter((x) => x !== id)
+        : s.length < 4
+          ? [...s, id]
+          : s,
+    );
+  };
+
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -56,6 +76,14 @@ export function CourtsPanel({
                     >
                       <Timer size={12} /> {fmtClock(tick - court.startedAt)}
                     </span>
+                    <button
+                      onClick={() => onShuffleCourt(idx)}
+                      className="kq-btn w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ background: "rgba(0,0,0,0.06)" }}
+                      title="Shuffle teams (same 4 players, new team split)"
+                    >
+                      <Shuffle size={12} style={{ color: INK }} />
+                    </button>
                   </div>
 
                   {/* 2v2 matchup, split by a net-style divider */}
@@ -172,17 +200,87 @@ export function CourtsPanel({
                     ? `Ready for ${Math.min(4, queueLength)} player${Math.min(4, queueLength) === 1 ? "" : "s"}`
                     : "Waiting for check-ins"}
                 </span>
-                <button
-                  onClick={() => onAssignToCourt(idx)}
-                  disabled={queueLength === 0}
-                  className="kq-btn rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40"
-                  style={{
-                    background: "rgba(255,255,255,0.15)",
-                    color: "#fff",
-                  }}
-                >
-                  Send next up
-                </button>
+
+                {pickerOpenIdx === idx ? (
+                  <div className="w-full">
+                    <div className="flex flex-wrap gap-1.5 justify-center mb-2 max-h-28 overflow-y-auto">
+                      {notPlaying.map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => toggleSelected(p.id)}
+                          className="text-xs px-2 py-1 rounded-full font-medium"
+                          style={{
+                            background: selected.includes(p.id)
+                              ? "#FFAA1D"
+                              : "rgba(255,255,255,0.15)",
+                            color: selected.includes(p.id) ? "#0E2A26" : "#fff",
+                          }}
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+                    <span
+                      className="text-[11px] block mb-2"
+                      style={{ color: "#9FC4BE" }}
+                    >
+                      {selected.length}/4 selected
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          onManualAssign(idx, selected);
+                          setSelected([]);
+                          setPickerOpenIdx(null);
+                        }}
+                        disabled={selected.length !== 4}
+                        className="kq-btn flex-1 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-40"
+                        style={{ background: "#FFAA1D", color: "#0E2A26" }}
+                      >
+                        Assign selected
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelected([]);
+                          setPickerOpenIdx(null);
+                        }}
+                        className="kq-btn rounded-lg px-3 py-2 text-xs font-semibold"
+                        style={{
+                          background: "rgba(255,255,255,0.15)",
+                          color: "#fff",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={() => onAssignToCourt(idx)}
+                      disabled={queueLength === 0}
+                      className="kq-btn flex-1 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40"
+                      style={{
+                        background: "rgba(255,255,255,0.15)",
+                        color: "#fff",
+                      }}
+                    >
+                      Send next up
+                    </button>
+                    <button
+                      onClick={() => setPickerOpenIdx(idx)}
+                      disabled={notPlaying.length === 0}
+                      className="kq-btn rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-40"
+                      style={{
+                        background: "rgba(255,255,255,0.15)",
+                        color: "#fff",
+                      }}
+                      title="Manually pick who plays"
+                    >
+                      Pick
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { PlayerLevel, LEVEL_WEIGHT, STORAGE_KEY } from "./types";
+import { PlayerLevel, LEVEL_WEIGHT, STORAGE_KEY, MatchMode } from "./types";
 
 export function fmtClock(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -45,9 +45,11 @@ export function loadSaved(): any {
 export function bestTeamSplit(
   group: number[],
   levelOf: (id: number) => PlayerLevel,
-): { teamA: number[]; teamB: number[]; imbalance: number } {
+  mode: MatchMode,
+  resultOf: (id: number) => "W" | "L" | null,
+): { teamA: number[]; teamB: number[]; score: number } {
   if (group.length !== 4) {
-    return { teamA: group.slice(0, 2), teamB: group.slice(2, 4), imbalance: 0 };
+    return { teamA: group.slice(0, 2), teamB: group.slice(2, 4), score: 0 };
   }
   const [a, b, c, d] = group;
   const splits: [number[], number[]][] = [
@@ -64,23 +66,51 @@ export function bestTeamSplit(
       [b, c],
     ],
   ];
-  let best = splits[0];
-  let bestImbalance = Infinity;
-  for (const [teamA, teamB] of splits) {
+
+  const scoreOf = ([teamA, teamB]: [number[], number[]]): number => {
+    if (mode === "winloss") {
+      // Prefer each team to have one previous winner + one previous loser.
+      const mixed = (team: number[]) => {
+        const r = team.map(resultOf);
+        return r.includes("W") && r.includes("L") ? 1 : 0;
+      };
+      return mixed(teamA) + mixed(teamB);
+    }
+    // "mixed" and "competitive" both want the two teams' total level as close as possible —
+    // the difference between them is which 4 players get selected in the first place (see groupScore).
     const sumA = teamA.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
     const sumB = teamB.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
-    const imbalance = Math.abs(sumA - sumB);
-    if (imbalance < bestImbalance) {
-      bestImbalance = imbalance;
-      best = [teamA, teamB];
+    return -Math.abs(sumA - sumB);
+  };
+
+  let best = splits[0];
+  let bestScore = -Infinity;
+  for (const split of splits) {
+    const s = scoreOf(split);
+    if (s > bestScore) {
+      bestScore = s;
+      best = split;
     }
   }
-  return { teamA: best[0], teamB: best[1], imbalance: bestImbalance };
+  return { teamA: best[0], teamB: best[1], score: bestScore };
 }
 
-export function levelDiversity(
+export function groupScore(
   group: number[],
   levelOf: (id: number) => PlayerLevel,
+  mode: MatchMode,
+  resultOf: (id: number) => "W" | "L" | null,
 ): number {
+  if (mode === "competitive") {
+    // Fewer distinct levels in the group = closer to "A&A vs A&A". Falls back gracefully
+    // to whatever's closest when a perfectly uniform group of 4 isn't available.
+    return -new Set(group.map((id) => levelOf(id))).size;
+  }
+  if (mode === "winloss") {
+    const wins = group.filter((id) => resultOf(id) === "W").length;
+    const losses = group.filter((id) => resultOf(id) === "L").length;
+    return -Math.abs(wins - losses); // prefer an even 2/2 winner/loser split
+  }
+  // mixed: prefer variety across the group (current default behavior)
   return new Set(group.map((id) => levelOf(id))).size;
 }
