@@ -1,4 +1,4 @@
-import { Timer, Shuffle } from "lucide-react";
+import { Timer, Shuffle, X } from "lucide-react";
 import { Court, PlayerLevel, CARD, INK, Player } from "../types";
 import { fmtClock } from "../utils";
 import { LevelBadge } from "./LevelBadge";
@@ -15,6 +15,7 @@ export function CourtsPanel({
   onShuffleCourt,
   onManualAssign,
   waitingPlayers,
+  onRemovePlayer,
   nameOf,
   levelOf,
 }: {
@@ -27,6 +28,7 @@ export function CourtsPanel({
   onFinishGame: (idx: number, winner: "A" | "B") => void;
   onShuffleCourt: (idx: number) => void;
   onManualAssign: (idx: number, ids: number[]) => void;
+  onRemovePlayer: (idx: number, id: number) => void;
   waitingPlayers: Player[];
   nameOf: (id: number) => string;
   levelOf: (id: number) => PlayerLevel;
@@ -109,6 +111,14 @@ export function CourtsPanel({
                         >
                           <LevelBadge level={levelOf(id)} />
                           {nameOf(id)}
+                          <button
+                            onClick={() => onRemovePlayer(idx, id)}
+                            className="w-3.5 h-3.5 flex items-center justify-center rounded-full"
+                            style={{ background: "rgba(255,255,255,0.25)" }}
+                            title="Remove from court, back to front of queue"
+                          >
+                            <X size={9} />
+                          </button>
                         </span>
                       ))}
                     </div>
@@ -164,6 +174,14 @@ export function CourtsPanel({
                         >
                           <LevelBadge level={levelOf(id)} />
                           {nameOf(id)}
+                          <button
+                            onClick={() => onRemovePlayer(idx, id)}
+                            className="w-3.5 h-3.5 flex items-center justify-center rounded-full"
+                            style={{ background: "rgba(255,255,255,0.25)" }}
+                            title="Remove from court, back to front of queue"
+                          >
+                            <X size={9} />
+                          </button>
                         </span>
                       ))}
                     </div>

@@ -207,6 +207,31 @@ export function Queue() {
     finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
+  const removePlayerFromCourt = (idx: number, id: number) => {
+    const court = courts[idx];
+    if (!court) return;
+
+    setCourts((c) => {
+      const copy = [...c];
+      const remaining = court.ids.filter((pid) => pid !== id);
+      if (remaining.length === 0) {
+        copy[idx] = null;
+      } else {
+        copy[idx] = {
+          ...court,
+          ids: remaining,
+          teams: {
+            teamA: court.teams.teamA.filter((pid) => pid !== id),
+            teamB: court.teams.teamB.filter((pid) => pid !== id),
+          },
+        };
+      }
+      return copy;
+    });
+
+    setQueueIds((q) => [id, ...q.filter((qid) => qid !== id)]);
+  };
+
   const finishGame = (idx: number, winner: "A" | "B") => {
     const court = courts[idx];
     setCourts((c) => {
@@ -421,6 +446,7 @@ export function Queue() {
               onFinishGame={finishGame}
               onShuffleCourt={shuffleCourtTeams}
               onManualAssign={manualAssign}
+              onRemovePlayer={removePlayerFromCourt}
               waitingPlayers={waitingPlayers}
               nameOf={nameOf}
               levelOf={levelOf}
