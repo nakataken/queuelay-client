@@ -77,6 +77,8 @@ export type Court = ActiveCourt | null;
 
 export type MatchMode = "mixed" | "competitive" | "winloss";
 
+export type SortKey = "matches" | "wins" | "losses";
+
 // INTERFACES
 export interface Player {
   id: number;
