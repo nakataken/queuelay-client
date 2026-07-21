@@ -397,6 +397,7 @@ export function Queue() {
               onMoveQueue={moveQueue}
               onRemoveFromQueue={removeFromQueue}
               onShuffle={shuffleQueue}
+              mode={matchMode}
             />
             <CourtsPanel
               courts={courts}

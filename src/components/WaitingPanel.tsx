@@ -1,6 +1,12 @@
-import { ChevronUp, ChevronDown, UserPlus, X } from "lucide-react";
-import { CARD, CARD_LINE, INK, INK_SOFT } from "../types";
-import { Shuffle } from "lucide-react";
+import { ChevronUp, ChevronDown, UserPlus, X, Shuffle } from "lucide-react";
+import {
+  CARD,
+  CARD_LINE,
+  INK,
+  INK_SOFT,
+  MatchMode,
+  MATCH_MODE_LABEL,
+} from "../types";
 
 export function WaitingPanel({
   queueIds,
@@ -10,6 +16,7 @@ export function WaitingPanel({
   onMoveQueue,
   onRemoveFromQueue,
   onShuffle,
+  mode,
 }: {
   queueIds: number[];
   nameOf: (id: number) => string;
@@ -18,6 +25,7 @@ export function WaitingPanel({
   onMoveQueue: (id: number, dir: 1 | -1) => void;
   onRemoveFromQueue: (id: number) => void;
   onShuffle: () => void;
+  mode: MatchMode;
 }) {
   return (
     <div className="rounded-2xl p-4 h-fit" style={{ background: CARD }}>
@@ -98,9 +106,17 @@ export function WaitingPanel({
 
       {nextUp.length > 0 && (
         <div className="pt-3" style={{ borderTop: `1px solid ${CARD_LINE}` }}>
-          <span className="text-xs font-semibold" style={{ color: INK_SOFT }}>
-            Up next{!openCourtExists ? " (waiting for an open court)" : ""}
-          </span>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-semibold" style={{ color: INK_SOFT }}>
+              Up next{!openCourtExists ? " (waiting for an open court)" : ""}
+            </span>
+            <span
+              className="kq-mono text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: "#EFEBE0", color: INK_SOFT }}
+            >
+              {MATCH_MODE_LABEL[mode]}
+            </span>
+          </div>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
             {nextUp.map((id) => (
               <span
