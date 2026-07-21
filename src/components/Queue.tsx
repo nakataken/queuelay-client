@@ -207,6 +207,31 @@ export function Queue() {
     finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
+  const addPlayerToCourt = (idx: number, playerId: number) => {
+    const court = courts[idx];
+    if (!court || court.ids.length >= 4) return;
+
+    const addToA = court.teams.teamA.length < 2;
+    const newTeamA = addToA
+      ? [...court.teams.teamA, playerId]
+      : court.teams.teamA;
+    const newTeamB = !addToA
+      ? [...court.teams.teamB, playerId]
+      : court.teams.teamB;
+
+    setCourts((c) => {
+      const copy = [...c];
+      copy[idx] = {
+        ...court,
+        ids: [...court.ids, playerId],
+        teams: { teamA: newTeamA, teamB: newTeamB },
+      };
+      return copy;
+    });
+
+    setQueueIds((q) => q.filter((id) => id !== playerId));
+  };
+
   const removePlayerFromCourt = (idx: number, id: number) => {
     const court = courts[idx];
     if (!court) return;
@@ -447,6 +472,7 @@ export function Queue() {
               onShuffleCourt={shuffleCourtTeams}
               onManualAssign={manualAssign}
               onRemovePlayer={removePlayerFromCourt}
+              onAddPlayer={addPlayerToCourt}
               waitingPlayers={waitingPlayers}
               nameOf={nameOf}
               levelOf={levelOf}

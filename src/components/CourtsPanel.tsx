@@ -15,6 +15,7 @@ export function CourtsPanel({
   onShuffleCourt,
   onManualAssign,
   waitingPlayers,
+  onAddPlayer,
   onRemovePlayer,
   nameOf,
   levelOf,
@@ -28,6 +29,7 @@ export function CourtsPanel({
   onFinishGame: (idx: number, winner: "A" | "B") => void;
   onShuffleCourt: (idx: number) => void;
   onManualAssign: (idx: number, ids: number[]) => void;
+  onAddPlayer: (idx: number, id: number) => void;
   onRemovePlayer: (idx: number, id: number) => void;
   waitingPlayers: Player[];
   nameOf: (id: number) => string;
@@ -203,6 +205,29 @@ export function CourtsPanel({
                       Right won
                     </button>
                   </div>
+
+                  {court.ids.length < 4 && waitingPlayers.length > 0 && (
+                    <select
+                      onChange={(e) => {
+                        const id = Number(e.target.value);
+                        if (id) onAddPlayer(idx, id);
+                        e.target.value = "";
+                      }}
+                      defaultValue=""
+                      className="w-full mb-2 rounded-lg px-2 py-1.5 text-xs"
+                      style={{ background: "#F4F2EA", color: INK }}
+                    >
+                      <option value="" disabled>
+                        + Add player ({4 - court.ids.length} slot
+                        {4 - court.ids.length === 1 ? "" : "s"} open)
+                      </option>
+                      {waitingPlayers.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </>
             ) : (
