@@ -1,4 +1,4 @@
-import { Timer, Shuffle, X } from "lucide-react";
+import { Timer, Shuffle, X, RotateCcw } from "lucide-react";
 import { Court, PlayerLevel, CARD, INK, Player } from "../types";
 import { fmtClock } from "../utils";
 import { LevelBadge } from "./LevelBadge";
@@ -13,6 +13,7 @@ export function CourtsPanel({
   onAssignToCourt,
   onFinishGame,
   onShuffleCourt,
+  onResetCourt,
   onManualAssign,
   waitingPlayers,
   onAddPlayer,
@@ -28,6 +29,7 @@ export function CourtsPanel({
   onAssignToCourt: (idx: number) => void;
   onFinishGame: (idx: number, winner: "A" | "B") => void;
   onShuffleCourt: (idx: number) => void;
+  onResetCourt: (idx: number) => void;
   onManualAssign: (idx: number, ids: number[]) => void;
   onAddPlayer: (idx: number, id: number) => void;
   onRemovePlayer: (idx: number, id: number) => void;
@@ -71,23 +73,35 @@ export function CourtsPanel({
                     >
                       Court {idx + 1}
                     </span>
-                    <span
-                      className="kq-mono text-xs flex items-center gap-1 px-2 py-1 rounded-full"
-                      style={{
-                        background: court.color.soft,
-                        color: court.color.bg,
-                      }}
-                    >
-                      <Timer size={12} /> {fmtClock(tick - court.startedAt)}
-                    </span>
-                    <button
-                      onClick={() => onShuffleCourt(idx)}
-                      className="kq-btn w-6 h-6 rounded-full flex items-center justify-center"
-                      style={{ background: "rgba(0,0,0,0.06)" }}
-                      title="Shuffle teams (same 4 players, new team split)"
-                    >
-                      <Shuffle size={12} style={{ color: INK }} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="kq-mono text-xs flex items-center gap-1 px-2 py-1 rounded-full"
+                        style={{
+                          background: court.color.soft,
+                          color: court.color.bg,
+                        }}
+                      >
+                        <Timer size={12} /> {fmtClock(tick - court.startedAt)}
+                      </span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => onShuffleCourt(idx)}
+                          className="kq-btn w-6 h-6 rounded-full flex items-center justify-center"
+                          style={{ background: "rgba(0,0,0,0.06)" }}
+                          title="Shuffle teams (same 4 players, new team split)"
+                        >
+                          <Shuffle size={12} style={{ color: INK }} />
+                        </button>
+                        <button
+                          onClick={() => onResetCourt(idx)}
+                          className="kq-btn w-6 h-6 rounded-full flex items-center justify-center"
+                          style={{ background: "rgba(0,0,0,0.06)" }}
+                          title="Reset court — send all players back to the front of Waiting"
+                        >
+                          <RotateCcw size={12} style={{ color: INK }} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   {/* 2v2 matchup, split by a net-style divider */}

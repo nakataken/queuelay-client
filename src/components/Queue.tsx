@@ -347,6 +347,22 @@ export function Queue() {
     finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
+  const resetCourt = (idx: number) => {
+    const court = courts[idx];
+    if (!court) return;
+
+    setCourts((c) => {
+      const copy = [...c];
+      copy[idx] = null;
+      return copy;
+    });
+
+    setQueueIds((q) => [
+      ...court.ids,
+      ...q.filter((id) => !court.ids.includes(id)),
+    ]);
+  };
+
   const resetAll = () => {
     if (
       !window.confirm(
@@ -473,6 +489,7 @@ export function Queue() {
               onManualAssign={manualAssign}
               onRemovePlayer={removePlayerFromCourt}
               onAddPlayer={addPlayerToCourt}
+              onResetCourt={resetCourt}
               waitingPlayers={waitingPlayers}
               nameOf={nameOf}
               levelOf={levelOf}
