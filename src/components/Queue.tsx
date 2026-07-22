@@ -472,7 +472,16 @@ export function Queue() {
     } catch {
       // storage unavailable — fail silently
     }
-  }, [numCourts, courts, roster, queueIds, requeue, playerStats, matches]);
+  }, [
+    numCourts,
+    courts,
+    roster,
+    queueIds,
+    requeue,
+    playerStats,
+    matches,
+    matchMode,
+  ]);
 
   return (
     <div
