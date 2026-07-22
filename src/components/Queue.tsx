@@ -545,7 +545,10 @@ export function Queue() {
             <MatchHistoryPanel matches={matches} nameOf={nameOf} />
             <PlayerStatsPanel
               roster={roster.filter(
-                (p) => playingIds.has(p.id) || waitingSet.has(p.id),
+                (p) =>
+                  playingIds.has(p.id) ||
+                  waitingSet.has(p.id) ||
+                  (playerStats[p.id]?.matches ?? 0) > 0,
               )}
               playerStats={playerStats}
               gameCount={gameRef.current}
