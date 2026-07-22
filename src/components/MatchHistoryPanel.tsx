@@ -35,6 +35,11 @@ export function MatchHistoryPanel({
   nameOf: (id: number) => string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+
+  const ascending = [...matches].sort((a, b) => a.gameNumber - b.gameNumber);
+  const displayNumberOf = new Map<number, number>();
+  ascending.forEach((m, i) => displayNumberOf.set(m.gameNumber, i + 1));
+
   const sorted = [...matches].sort((a, b) => b.gameNumber - a.gameNumber);
 
   return (
@@ -85,7 +90,8 @@ export function MatchHistoryPanel({
                     className="kq-mono text-xs font-semibold"
                     style={{ color: m.color.bg }}
                   >
-                    Game #{m.gameNumber} &middot; Court {m.courtIndex + 1}
+                    Game #{displayNumberOf.get(m.gameNumber)} &middot; Court{" "}
+                    {m.courtIndex + 1}
                   </span>
                   <span className="text-xs kq-mono" style={{ color: INK_SOFT }}>
                     {m.finishedAt

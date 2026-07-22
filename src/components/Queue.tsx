@@ -131,17 +131,31 @@ export function Queue() {
 
   const shuffleQueue = () => {
     setQueueIds((q) => {
-      const group = pickNextGroup(
-        q,
-        playerStats,
-        levelOf,
-        matchMode,
-        resultOf,
-        lastGameOf,
-      );
-      const groupSet = new Set(group);
-      const rest = shuffle(q.filter((id) => !groupSet.has(id)));
-      return [...shuffle(group), ...rest];
+      let remaining = shuffle(q); // randomness: breaks ties differently each press
+      const ordered: number[] = [];
+
+      // Repeatedly pull the best mode-aware, fairness-first group of 4
+      // from the front of the (randomized) remaining pool.
+      while (remaining.length > 0) {
+        const group = pickNextGroup(
+          remaining,
+          playerStats,
+          levelOf,
+          matchMode,
+          resultOf,
+          lastGameOf,
+        );
+        if (group.length === 0) {
+          // safety: nothing selected — append the rest as-is
+          ordered.push(...remaining);
+          break;
+        }
+        const groupSet = new Set(group);
+        ordered.push(...group);
+        remaining = remaining.filter((id) => !groupSet.has(id));
+      }
+
+      return ordered;
     });
   };
 
@@ -201,14 +215,7 @@ export function Queue() {
   };
 
   const assignToCourt = (idx: number) => {
-    const group = pickNextGroup(
-      queueIds,
-      playerStats,
-      levelOf,
-      matchMode,
-      resultOf,
-      lastGameOf,
-    );
+    const group = queueIds.slice(0, 4);
     if (group.length < 1) return;
     const activeMode = effectiveMode(group, matchMode, resultOf);
     const split = bestTeamSplit(
@@ -427,18 +434,7 @@ export function Queue() {
     gameRef.current = 0;
   };
 
-  const nextUp = useMemo(
-    () =>
-      pickNextGroup(
-        queueIds,
-        playerStats,
-        levelOf,
-        matchMode,
-        resultOf,
-        lastGameOf,
-      ),
-    [queueIds, playerStats, matchMode, roster],
-  );
+  const nextUp = useMemo(() => queueIds.slice(0, 4), [queueIds]);
 
   const openCourtExists = courts.some((c) => !c);
 
