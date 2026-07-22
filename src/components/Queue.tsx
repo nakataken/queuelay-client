@@ -78,6 +78,9 @@ export function Queue() {
   const waitingPlayers = roster.filter((r) => waitingSet.has(r.id));
   const lastGameOf = (id: number): number => playerStats[id]?.lastGame ?? 0;
 
+  const canRemoveCourt = numCourts > 1 && !courts[numCourts - 1];
+  const canAddCourt = numCourts < 10;
+
   const addRosterMember = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const name = rosterInput.trim();
@@ -492,7 +495,10 @@ export function Queue() {
           numCourts={numCourts}
           onChangeCourtCount={changeCourtCount}
           onReset={resetAll}
+          canRemoveCourt={canRemoveCourt}
+          canAddCourt={canAddCourt}
         />
+        
         <TabBar active={activeTab} onChange={setActiveTab} />
 
         {activeTab === "queue" && (

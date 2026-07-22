@@ -5,10 +5,14 @@ export function Header({
   numCourts,
   onChangeCourtCount,
   onReset,
+  canRemoveCourt,
+  canAddCourt,
 }: {
   numCourts: number;
   onChangeCourtCount: (delta: number) => void;
   onReset: () => void;
+  canRemoveCourt: boolean;
+  canAddCourt: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -35,7 +39,8 @@ export function Header({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onChangeCourtCount(-1)}
-              className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold"
+              disabled={!canRemoveCourt}
+              className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold disabled:opacity-30 disabled:cursor-not-allowed"
               style={{ background: "rgba(255,255,255,0.15)" }}
               aria-label="Remove a court"
             >
@@ -46,7 +51,8 @@ export function Header({
             </span>
             <button
               onClick={() => onChangeCourtCount(1)}
-              className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold"
+              disabled={!canAddCourt}
+              className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold disabled:opacity-30 disabled:cursor-not-allowed"
               style={{ background: "rgba(255,255,255,0.15)" }}
               aria-label="Add a court"
             >
