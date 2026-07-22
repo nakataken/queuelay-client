@@ -75,6 +75,7 @@ export function Queue() {
     (r) => !playingIds.has(r.id) && !waitingSet.has(r.id),
   );
   const waitingPlayers = roster.filter((r) => waitingSet.has(r.id));
+  const lastGameOf = (id: number): number => playerStats[id]?.lastGame ?? 0;
 
   const addRosterMember = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -126,7 +127,14 @@ export function Queue() {
 
   const shuffleQueue = () => {
     setQueueIds((q) => {
-      const group = pickNextGroup(q, playerStats, levelOf, matchMode, resultOf);
+      const group = pickNextGroup(
+        q,
+        playerStats,
+        levelOf,
+        matchMode,
+        resultOf,
+        lastGameOf,
+      );
       const groupSet = new Set(group);
       const rest = shuffle(q.filter((id) => !groupSet.has(id)));
       return [...shuffle(group), ...rest];
@@ -200,10 +208,17 @@ export function Queue() {
       levelOf,
       matchMode,
       resultOf,
+      lastGameOf,
     );
     if (group.length < 1) return;
     const activeMode = effectiveMode(group, matchMode, resultOf);
-    const split = bestTeamSplit(group, levelOf, activeMode, resultOf);
+    const split = bestTeamSplit(
+      group,
+      levelOf,
+      activeMode,
+      resultOf,
+      lastGameOf,
+    );
     finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
@@ -343,7 +358,13 @@ export function Queue() {
 
   const manualAssign = (idx: number, selectedIds: number[]) => {
     if (selectedIds.length !== 4) return;
-    const split = bestTeamSplit(selectedIds, levelOf, matchMode, resultOf);
+    const split = bestTeamSplit(
+      selectedIds,
+      levelOf,
+      matchMode,
+      resultOf,
+      lastGameOf,
+    );
     finalizeAssignment(idx, split.teamA, split.teamB);
   };
 
@@ -395,6 +416,7 @@ export function Queue() {
     levelOf,
     matchMode,
     resultOf,
+    lastGameOf,
   );
 
   const openCourtExists = courts.some((c) => !c);

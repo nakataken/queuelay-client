@@ -53,6 +53,7 @@ export function bestTeamSplit(
   levelOf: (id: number) => PlayerLevel,
   mode: MatchMode,
   resultOf: (id: number) => "W" | "L" | null,
+  lastGameOf: (id: number) => number,
 ): { teamA: number[]; teamB: number[]; score: number } {
   if (group.length !== 4) {
     return { teamA: group.slice(0, 2), teamB: group.slice(2, 4), score: 0 };
@@ -75,15 +76,17 @@ export function bestTeamSplit(
 
   const scoreOf = ([teamA, teamB]: [number[], number[]]): number => {
     if (mode === "winloss") {
-      // Prefer each team to have one previous winner + one previous loser.
-      const mixed = (team: number[]) => {
-        const r = team.map(resultOf);
-        return r.includes("W") && r.includes("L") ? 1 : 0;
+      const pairScore = (team: number[]) => {
+        const [p, q] = team;
+        const rp = resultOf(p);
+        const rq = resultOf(q);
+        let score = 0;
+        if (rp && rq && rp !== rq) score += 2; // one winner, one loser on this team
+        if (lastGameOf(p) !== lastGameOf(q)) score += 1; // not former teammates/opponents from the same match
+        return score;
       };
-      return mixed(teamA) + mixed(teamB);
+      return pairScore(teamA) + pairScore(teamB);
     }
-    // "mixed" and "competitive" both want the two teams' total level as close as possible —
-    // the difference between them is which 4 players get selected in the first place (see groupScore).
     const sumA = teamA.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
     const sumB = teamB.reduce((s, id) => s + LEVEL_WEIGHT[levelOf(id)], 0);
     return -Math.abs(sumA - sumB);
@@ -106,18 +109,18 @@ export function groupScore(
   levelOf: (id: number) => PlayerLevel,
   mode: MatchMode,
   resultOf: (id: number) => "W" | "L" | null,
+  lastGameOf: (id: number) => number,
 ): number {
   if (mode === "competitive") {
-    // Fewer distinct levels in the group = closer to "A&A vs A&A". Falls back gracefully
-    // to whatever's closest when a perfectly uniform group of 4 isn't available.
     return -new Set(group.map((id) => levelOf(id))).size;
   }
   if (mode === "winloss") {
     const wins = group.filter((id) => resultOf(id) === "W").length;
     const losses = group.filter((id) => resultOf(id) === "L").length;
-    return -Math.abs(wins - losses); // prefer an even 2/2 winner/loser split
+    const balance = -Math.abs(wins - losses) * 10; // 2-2 split is the priority
+    const distinctGames = new Set(group.map((id) => lastGameOf(id))).size; // favor pulling from multiple different past games
+    return balance + distinctGames;
   }
-  // mixed: prefer variety across the group (current default behavior)
   return new Set(group.map((id) => levelOf(id))).size;
 }
 
@@ -127,6 +130,7 @@ export function pickNextGroup(
   levelOf: (id: number) => PlayerLevel,
   mode: MatchMode,
   resultOf: (id: number) => "W" | "L" | null,
+  lastGameOf: (id: number) => number,
 ): number[] {
   if (queueIds.length < 1) return [];
   const activeMode = effectiveMode(queueIds, mode, resultOf);
@@ -162,8 +166,9 @@ export function pickNextGroup(
   const flexSlots = 4 - mandatory.length;
 
   const scoreCandidate = (group: number[]) => ({
-    group: groupScore(group, levelOf, activeMode, resultOf),
-    split: bestTeamSplit(group, levelOf, activeMode, resultOf).score,
+    group: groupScore(group, levelOf, activeMode, resultOf, lastGameOf),
+    split: bestTeamSplit(group, levelOf, activeMode, resultOf, lastGameOf)
+      .score,
   });
 
   const primaryFirst = activeMode !== "mixed";
