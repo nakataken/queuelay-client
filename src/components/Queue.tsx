@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Player,
   Court,
@@ -427,13 +427,17 @@ export function Queue() {
     gameRef.current = 0;
   };
 
-  const nextUp = pickNextGroup(
-    queueIds,
-    playerStats,
-    levelOf,
-    matchMode,
-    resultOf,
-    lastGameOf,
+  const nextUp = useMemo(
+    () =>
+      pickNextGroup(
+        queueIds,
+        playerStats,
+        levelOf,
+        matchMode,
+        resultOf,
+        lastGameOf,
+      ),
+    [queueIds, playerStats, matchMode, roster],
   );
 
   const openCourtExists = courts.some((c) => !c);
@@ -498,7 +502,7 @@ export function Queue() {
           canRemoveCourt={canRemoveCourt}
           canAddCourt={canAddCourt}
         />
-        
+
         <TabBar active={activeTab} onChange={setActiveTab} />
 
         {activeTab === "queue" && (
