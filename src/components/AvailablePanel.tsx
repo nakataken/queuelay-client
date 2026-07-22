@@ -58,6 +58,7 @@ export function AvailablePanel({
             >
               <LevelBadge level={p.level} onClick={() => onCycleLevel(p.id)} />
               <button
+                type="button"
                 onClick={() => onCheckIn(p.id)}
                 className="text-sm font-medium px-2.5 py-1.5 rounded-full"
                 style={{ color: INK }}
@@ -66,6 +67,7 @@ export function AvailablePanel({
                 {p.name}
               </button>
               <button
+                type="button"
                 onClick={() => onRemoveRosterMember(p.id)}
                 className="w-6 h-6 flex items-center justify-center rounded-full"
                 title="Remove from roster"

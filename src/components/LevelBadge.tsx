@@ -9,6 +9,7 @@ export function LevelBadge({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       title={LEVEL_LABEL[level]}
       className="kq-mono text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shrink-0"

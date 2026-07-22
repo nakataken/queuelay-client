@@ -38,6 +38,7 @@ export function Header({
           </span>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => onChangeCourtCount(-1)}
               disabled={!canRemoveCourt}
               className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold disabled:opacity-30 disabled:cursor-not-allowed"
@@ -50,6 +51,7 @@ export function Header({
               {numCourts}
             </span>
             <button
+              type="button"
               onClick={() => onChangeCourtCount(1)}
               disabled={!canAddCourt}
               className="kq-btn w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold disabled:opacity-30 disabled:cursor-not-allowed"
@@ -62,6 +64,7 @@ export function Header({
         </div>
 
         <button
+          type="button"
           onClick={onReset}
           className="kq-btn flex items-center gap-1.5 text-xs font-medium px-3 py-2.5 rounded-xl"
           style={{ background: "rgba(255,255,255,0.08)", color: "#9FC4BE" }}

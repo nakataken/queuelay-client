@@ -20,6 +20,7 @@ export function TabBar({
       >
         {tabs.map((t) => (
           <button
+            type="button"
             key={t.key}
             onClick={() => onChange(t.key)}
             className="kq-btn flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-semibold outline-none"

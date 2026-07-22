@@ -40,6 +40,7 @@ export function MatchHistoryPanel({
   return (
     <div className="rounded-2xl p-4" style={{ background: CARD }}>
       <button
+        type="button"
         onClick={() => setCollapsed((c) => !c)}
         className="w-full flex items-center justify-between mb-3"
       >

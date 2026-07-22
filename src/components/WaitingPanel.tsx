@@ -46,6 +46,7 @@ export function WaitingPanel({
             {queueIds.length}
           </span>
           <button
+            type="button"
             onClick={onShuffle}
             disabled={queueIds.length < 2}
             className="kq-btn flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full disabled:opacity-30"
@@ -87,6 +88,7 @@ export function WaitingPanel({
                   {nameOf(id)}
                 </span>
                 <button
+                  type="button"
                   onClick={() => onMoveQueue(id, -1)}
                   disabled={i === 0}
                   className="disabled:opacity-30"
@@ -94,6 +96,7 @@ export function WaitingPanel({
                   <ChevronUp size={15} style={{ color: INK_SOFT }} />
                 </button>
                 <button
+                  type="button"
                   onClick={() => onMoveQueue(id, 1)}
                   disabled={i === queueIds.length - 1}
                   className="disabled:opacity-30"
@@ -101,6 +104,7 @@ export function WaitingPanel({
                   <ChevronDown size={15} style={{ color: INK_SOFT }} />
                 </button>
                 <button
+                  type="button"
                   onClick={() => onRemoveFromQueue(id)}
                   title="Back to available"
                 >

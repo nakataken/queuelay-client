@@ -85,6 +85,7 @@ export function CourtsPanel({
                       </span>
                       <div className="flex gap-1">
                         <button
+                          type="button"
                           onClick={() => onShuffleCourt(idx)}
                           className="kq-btn w-6 h-6 rounded-full flex items-center justify-center"
                           style={{ background: "rgba(0,0,0,0.06)" }}
@@ -93,6 +94,7 @@ export function CourtsPanel({
                           <Shuffle size={12} style={{ color: INK }} />
                         </button>
                         <button
+                          type="button"
                           onClick={() => onResetCourt(idx)}
                           className="kq-btn w-6 h-6 rounded-full flex items-center justify-center"
                           style={{ background: "rgba(0,0,0,0.06)" }}
@@ -128,6 +130,7 @@ export function CourtsPanel({
                           <LevelBadge level={levelOf(id)} />
                           {nameOf(id)}
                           <button
+                            type="button"
                             onClick={() => onRemovePlayer(idx, id)}
                             className="w-3.5 h-3.5 flex items-center justify-center rounded-full"
                             style={{ background: "rgba(255,255,255,0.25)" }}
@@ -191,6 +194,7 @@ export function CourtsPanel({
                           <LevelBadge level={levelOf(id)} />
                           {nameOf(id)}
                           <button
+                            type="button"
                             onClick={() => onRemovePlayer(idx, id)}
                             className="w-3.5 h-3.5 flex items-center justify-center rounded-full"
                             style={{ background: "rgba(255,255,255,0.25)" }}
@@ -205,6 +209,7 @@ export function CourtsPanel({
 
                   <div className="flex gap-2">
                     <button
+                      type="button"
                       onClick={() => onFinishGame(idx, "A")}
                       className="kq-btn flex-1 rounded-lg py-2 text-xs sm:text-sm font-semibold"
                       style={{ background: INK, color: "#fff" }}
@@ -212,6 +217,7 @@ export function CourtsPanel({
                       Left won
                     </button>
                     <button
+                      type="button"
                       onClick={() => onFinishGame(idx, "B")}
                       className="kq-btn flex-1 rounded-lg py-2 text-xs sm:text-sm font-semibold"
                       style={{ background: INK, color: "#fff" }}
@@ -263,6 +269,7 @@ export function CourtsPanel({
                     <div className="flex flex-wrap gap-1.5 justify-center mb-2 max-h-28 overflow-y-auto">
                       {waitingPlayers.map((p) => (
                         <button
+                          type="button"
                           key={p.id}
                           onClick={() => toggleSelected(p.id)}
                           className="text-xs px-2 py-1 rounded-full font-medium"
@@ -285,6 +292,7 @@ export function CourtsPanel({
                     </span>
                     <div className="flex gap-2">
                       <button
+                        type="button"
                         onClick={() => {
                           onManualAssign(idx, selected);
                           setSelected([]);
@@ -297,6 +305,7 @@ export function CourtsPanel({
                         Assign selected
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setSelected([]);
                           setPickerOpenIdx(null);
@@ -314,6 +323,7 @@ export function CourtsPanel({
                 ) : (
                   <div className="flex gap-2 w-full">
                     <button
+                      type="button"
                       onClick={() => onAssignToCourt(idx)}
                       disabled={queueLength === 0}
                       className="kq-btn flex-1 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40"
@@ -325,6 +335,7 @@ export function CourtsPanel({
                       Send next up
                     </button>
                     <button
+                      type="button"
                       onClick={() => setPickerOpenIdx(idx)}
                       disabled={waitingPlayers.length === 0}
                       className="kq-btn rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-40"

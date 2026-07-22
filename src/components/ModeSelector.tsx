@@ -15,6 +15,7 @@ export function ModeSelector({
     >
       {modes.map((m) => (
         <button
+          type="button"
           key={m}
           onClick={() => onChange(m)}
           className="kq-btn flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold"
