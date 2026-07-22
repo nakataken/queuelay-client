@@ -27,6 +27,8 @@ export function WaitingPanel({
   onShuffle: () => void;
   mode: MatchMode;
 }) {
+  const nextUpSet = new Set(nextUp);
+
   return (
     <div className="rounded-2xl p-4 h-fit" style={{ background: CARD }}>
       <div className="flex items-center justify-between mb-3">
@@ -61,46 +63,52 @@ export function WaitingPanel({
         </p>
       ) : (
         <ul className="flex flex-col gap-1.5 mb-3">
-          {queueIds.map((id, i) => (
-            <li
-              key={id}
-              className="flex items-center gap-2 rounded-lg px-2 py-1.5"
-              style={{ border: `1px solid ${CARD_LINE}` }}
-            >
-              <span
-                className="kq-mono text-xs w-4 text-right"
-                style={{ color: INK_SOFT }}
+          {queueIds.map((id, i) => {
+            const isNextUp = nextUpSet.has(id);
+            return (
+              <li
+                key={id}
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5"
+                style={{
+                  border: `1px solid ${isNextUp ? "#FFAA1D" : CARD_LINE}`,
+                  background: isNextUp ? "#FFF6E5" : "transparent",
+                }}
               >
-                {i + 1}
-              </span>
-              <span
-                className="text-sm flex-1 font-medium"
-                style={{ color: INK }}
-              >
-                {nameOf(id)}
-              </span>
-              <button
-                onClick={() => onMoveQueue(id, -1)}
-                disabled={i === 0}
-                className="disabled:opacity-30"
-              >
-                <ChevronUp size={15} style={{ color: INK_SOFT }} />
-              </button>
-              <button
-                onClick={() => onMoveQueue(id, 1)}
-                disabled={i === queueIds.length - 1}
-                className="disabled:opacity-30"
-              >
-                <ChevronDown size={15} style={{ color: INK_SOFT }} />
-              </button>
-              <button
-                onClick={() => onRemoveFromQueue(id)}
-                title="Back to available"
-              >
-                <X size={15} style={{ color: INK_SOFT }} />
-              </button>
-            </li>
-          ))}
+                <span
+                  className="kq-mono text-xs w-4 text-right"
+                  style={{ color: INK_SOFT }}
+                >
+                  {i + 1}
+                </span>
+                <span
+                  className="text-sm flex-1 font-medium"
+                  style={{ color: INK }}
+                >
+                  {nameOf(id)}
+                </span>
+                <button
+                  onClick={() => onMoveQueue(id, -1)}
+                  disabled={i === 0}
+                  className="disabled:opacity-30"
+                >
+                  <ChevronUp size={15} style={{ color: INK_SOFT }} />
+                </button>
+                <button
+                  onClick={() => onMoveQueue(id, 1)}
+                  disabled={i === queueIds.length - 1}
+                  className="disabled:opacity-30"
+                >
+                  <ChevronDown size={15} style={{ color: INK_SOFT }} />
+                </button>
+                <button
+                  onClick={() => onRemoveFromQueue(id)}
+                  title="Back to available"
+                >
+                  <X size={15} style={{ color: INK_SOFT }} />
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
 
