@@ -7,6 +7,7 @@ import {
   INK_SOFT,
   SortKey,
 } from "../types";
+import { emptyStats } from "../utils";
 import { ChevronUp, ChevronDown, Users } from "lucide-react";
 import { useState } from "react";
 
@@ -22,14 +23,7 @@ export function PlayerStatsPanel({
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<1 | -1>(-1); // -1 = descending by default
 
-  const statsOf = (id: number) =>
-    playerStats[id] ?? {
-      matches: 0,
-      lastGame: 0,
-      wins: 0,
-      losses: 0,
-      lastResult: null,
-    };
+  const statsOf = (id: number) => playerStats[id] ?? emptyStats();
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {

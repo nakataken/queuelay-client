@@ -22,6 +22,16 @@ export function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+export function emptyStats(): PlayerStats {
+  return {
+    matches: 0,
+    lastGame: 0,
+    wins: 0,
+    losses: 0,
+    lastResult: null,
+  };
+}
+
 export function combinations<T>(arr: T[], k: number): T[][] {
   if (k === 0) return [[]];
   if (arr.length < k) return [];
@@ -137,14 +147,9 @@ export function pickNextGroup(
 
   const withStats = queueIds.map((id) => ({
     id,
-    stats: playerStats[id] ?? {
-      matches: 0,
-      lastGame: 0,
-      wins: 0,
-      losses: 0,
-      lastResult: null,
-    },
+    stats: playerStats[id] ?? emptyStats(),
   }));
+
   withStats.sort((a, b) => {
     if (a.stats.matches !== b.stats.matches)
       return a.stats.matches - b.stats.matches;

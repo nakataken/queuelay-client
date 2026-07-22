@@ -17,6 +17,7 @@ import {
   loadSaved,
   pickNextGroup,
   effectiveMode,
+  emptyStats,
 } from "../utils";
 import { ModeSelector } from "../components/ModeSelector";
 import { Header } from "./Header";
@@ -171,12 +172,7 @@ export function Queue() {
     setPlayerStats((prev) => {
       const next = { ...prev };
       group.forEach((id) => {
-        const existing = next[id] ?? {
-          matches: 0,
-          lastGame: 0,
-          wins: 0,
-          losses: 0,
-        };
+        const existing = next[id] ?? emptyStats();
         next[id] = {
           ...existing,
           matches: existing.matches + 1,
@@ -288,23 +284,11 @@ export function Queue() {
       setPlayerStats((prev) => {
         const next = { ...prev };
         winningIds.forEach((id) => {
-          const existing = next[id] ?? {
-            matches: 0,
-            lastGame: 0,
-            wins: 0,
-            losses: 0,
-            lastResult: null,
-          };
+          const existing = next[id] ?? emptyStats();
           next[id] = { ...existing, wins: existing.wins + 1, lastResult: "W" };
         });
         losingIds.forEach((id) => {
-          const existing = next[id] ?? {
-            matches: 0,
-            lastGame: 0,
-            wins: 0,
-            losses: 0,
-            lastResult: null,
-          };
+          const existing = next[id] ?? emptyStats();
           next[id] = {
             ...existing,
             losses: existing.losses + 1,
