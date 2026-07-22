@@ -16,14 +16,17 @@ export function TabBar({
     <div className="flex justify-center mb-6">
       <div
         className="inline-flex gap-1 rounded-xl p-1 w-full sm:w-auto"
+        role="tablist"
         style={{ background: "rgba(255,255,255,0.08)" }}
       >
         {tabs.map((t) => (
           <button
-            type="button"
             key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={active === t.key}
             onClick={() => onChange(t.key)}
-            className="kq-btn flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-semibold outline-none"
+            className="kq-btn flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-semibold"
             style={{
               background: active === t.key ? "#FFFFFF" : "transparent",
               color: active === t.key ? "#0E2A26" : "#9FC4BE",

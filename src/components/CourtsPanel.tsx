@@ -87,18 +87,16 @@ export function CourtsPanel({
                         <button
                           type="button"
                           onClick={() => onShuffleCourt(idx)}
-                          className="kq-btn w-6 h-6 rounded-full flex items-center justify-center"
-                          style={{ background: "rgba(0,0,0,0.06)" }}
-                          title="Shuffle teams (same 4 players, new team split)"
+                          aria-label={`Shuffle teams on court ${idx + 1}`}
+                          title="Shuffle teams (same 4 players, new team split)" /* ... */
                         >
                           <Shuffle size={12} style={{ color: INK }} />
                         </button>
                         <button
                           type="button"
                           onClick={() => onResetCourt(idx)}
-                          className="kq-btn w-6 h-6 rounded-full flex items-center justify-center"
-                          style={{ background: "rgba(0,0,0,0.06)" }}
-                          title="Reset court — send all players back to the front of Waiting"
+                          aria-label={`Reset court ${idx + 1}`}
+                          title="Reset court — send all players back to the front of Waiting" /* ... */
                         >
                           <RotateCcw size={12} style={{ color: INK }} />
                         </button>

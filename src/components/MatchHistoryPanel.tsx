@@ -42,6 +42,7 @@ export function MatchHistoryPanel({
       <button
         type="button"
         onClick={() => setCollapsed((c) => !c)}
+        aria-expanded={!collapsed}
         className="w-full flex items-center justify-between mb-3"
       >
         <span

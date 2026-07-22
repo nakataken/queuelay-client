@@ -71,23 +71,67 @@ export function PlayerStatsPanel({
           <tr style={{ color: INK_SOFT }} className="text-left">
             <th className="font-medium pb-2">Name</th>
             <th
-              className="font-medium pb-2 text-center cursor-pointer select-none"
-              onClick={() => toggleSort("matches")}
+              className="font-medium pb-2 text-center"
+              aria-sort={
+                sortKey === "matches"
+                  ? sortDir === -1
+                    ? "descending"
+                    : "ascending"
+                  : "none"
+              }
             >
-              Matches
-              <SortIcon active={sortKey === "matches"} />
+              <button
+                type="button"
+                onClick={() => toggleSort("matches")}
+                aria-label="Sort by matches"
+                className="kq-btn select-none inline-flex items-center justify-center mx-auto"
+                style={{ color: "inherit" }}
+              >
+                Matches
+                <SortIcon active={sortKey === "matches"} />
+              </button>
             </th>
             <th
-              className="font-medium pb-2 text-center cursor-pointer select-none"
-              onClick={() => toggleSort("wins")}
+              className="font-medium pb-2 text-center"
+              aria-sort={
+                sortKey === "wins"
+                  ? sortDir === -1
+                    ? "descending"
+                    : "ascending"
+                  : "none"
+              }
             >
-              W<SortIcon active={sortKey === "wins"} />
+              <button
+                type="button"
+                onClick={() => toggleSort("wins")}
+                aria-label="Sort by wins"
+                className="kq-btn select-none inline-flex items-center justify-center mx-auto"
+                style={{ color: "inherit" }}
+              >
+                W
+                <SortIcon active={sortKey === "wins"} />
+              </button>
             </th>
             <th
-              className="font-medium pb-2 text-center cursor-pointer select-none"
-              onClick={() => toggleSort("losses")}
+              className="font-medium pb-2 text-center"
+              aria-sort={
+                sortKey === "losses"
+                  ? sortDir === -1
+                    ? "descending"
+                    : "ascending"
+                  : "none"
+              }
             >
-              L<SortIcon active={sortKey === "losses"} />
+              <button
+                type="button"
+                onClick={() => toggleSort("losses")}
+                aria-label="Sort by losses"
+                className="kq-btn select-none inline-flex items-center justify-center mx-auto"
+                style={{ color: "inherit" }}
+              >
+                L
+                <SortIcon active={sortKey === "losses"} />
+              </button>
             </th>
             <th className="font-medium pb-2 text-right">Last Game</th>
           </tr>

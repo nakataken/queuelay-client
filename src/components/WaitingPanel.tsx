@@ -91,6 +91,7 @@ export function WaitingPanel({
                   type="button"
                   onClick={() => onMoveQueue(id, -1)}
                   disabled={i === 0}
+                  aria-label={`Move ${nameOf(id)} up`}
                   className="disabled:opacity-30"
                 >
                   <ChevronUp size={15} style={{ color: INK_SOFT }} />
@@ -99,6 +100,7 @@ export function WaitingPanel({
                   type="button"
                   onClick={() => onMoveQueue(id, 1)}
                   disabled={i === queueIds.length - 1}
+                  aria-label={`Move ${nameOf(id)} down`}
                   className="disabled:opacity-30"
                 >
                   <ChevronDown size={15} style={{ color: INK_SOFT }} />
@@ -106,6 +108,7 @@ export function WaitingPanel({
                 <button
                   type="button"
                   onClick={() => onRemoveFromQueue(id)}
+                  aria-label={`Remove ${nameOf(id)} from queue`}
                   title="Back to available"
                 >
                   <X size={15} style={{ color: INK_SOFT }} />
