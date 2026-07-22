@@ -382,6 +382,36 @@ export function Queue() {
       ...court.ids,
       ...q.filter((id) => !court.ids.includes(id)),
     ]);
+
+    // Only roll back the counter if this was the most recently issued game number —
+    // if other games have already been assigned after it, don't renumber (that would
+    // shift/collide with games that genuinely happened).
+    if (court.gameNumber === gameRef.current) {
+      gameRef.current -= 1;
+    }
+
+    setMatches((prev) => {
+      const remaining = prev.filter((m) => m.gameNumber !== court.gameNumber);
+
+      setPlayerStats((prevStats) => {
+        const next = { ...prevStats };
+        court.ids.forEach((id) => {
+          const existing = next[id];
+          if (!existing) return;
+          const priorGames = remaining
+            .filter((m) => m.teamA.includes(id) || m.teamB.includes(id))
+            .map((m) => m.gameNumber);
+          next[id] = {
+            ...existing,
+            matches: Math.max(0, existing.matches - 1),
+            lastGame: priorGames.length > 0 ? Math.max(...priorGames) : 0,
+          };
+        });
+        return next;
+      });
+
+      return remaining;
+    });
   };
 
   const resetAll = () => {
