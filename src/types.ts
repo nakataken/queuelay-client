@@ -73,6 +73,12 @@ export const MATCH_MODE_LABEL: Record<MatchMode, string> = {
   winloss: "Win/Loss Mix",
 };
 
+export const MATCH_MODE_DESC: Record<MatchMode, string> = {
+  mixed: "Balanced variety — mixes different skill levels together.",
+  competitive: "Groups players of similar skill levels for closer games.",
+  winloss: "Balances recent winners and losers on each side.",
+};
+
 // TYPES
 export type PlayerLevel = "A" | "B" | "C";
 
