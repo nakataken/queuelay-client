@@ -436,6 +436,14 @@ export function Queue() {
 
   const nextUp = useMemo(() => queueIds.slice(0, 4), [queueIds]);
 
+  const displayNumberOf = useMemo(() => {
+    const map = new Map<number, number>();
+    [...matches]
+      .sort((a, b) => a.gameNumber - b.gameNumber)
+      .forEach((m, i) => map.set(m.gameNumber, i + 1));
+    return map;
+  }, [matches]);
+
   const openCourtExists = courts.some((c) => !c);
 
   useEffect(() => {
@@ -548,7 +556,11 @@ export function Queue() {
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            <MatchHistoryPanel matches={matches} nameOf={nameOf} />
+            <MatchHistoryPanel
+              matches={matches}
+              nameOf={nameOf}
+              displayNumberOf={displayNumberOf}
+            />
             <PlayerStatsPanel
               roster={roster.filter(
                 (p) =>
@@ -558,6 +570,7 @@ export function Queue() {
               )}
               playerStats={playerStats}
               gameCount={gameRef.current}
+              displayNumberOf={displayNumberOf}
             />
           </div>
         )}

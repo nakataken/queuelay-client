@@ -30,14 +30,15 @@ function TeamChips({
 export function MatchHistoryPanel({
   matches,
   nameOf,
+  displayNumberOf,
 }: {
   matches: MatchRecord[];
   nameOf: (id: number) => string;
+  displayNumberOf: Map<number, number>;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const ascending = [...matches].sort((a, b) => a.gameNumber - b.gameNumber);
-  const displayNumberOf = new Map<number, number>();
   ascending.forEach((m, i) => displayNumberOf.set(m.gameNumber, i + 1));
 
   const sorted = [...matches].sort((a, b) => b.gameNumber - a.gameNumber);

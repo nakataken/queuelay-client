@@ -15,10 +15,12 @@ export function PlayerStatsPanel({
   roster,
   playerStats,
   gameCount,
+  displayNumberOf,
 }: {
   roster: Player[];
   playerStats: Record<number, PlayerStats>;
   gameCount: number;
+  displayNumberOf: Map<number, number>;
 }) {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<1 | -1>(-1); // -1 = descending by default
@@ -180,7 +182,9 @@ export function PlayerStatsPanel({
                   className="py-1.5 text-right kq-mono"
                   style={{ color: INK_SOFT }}
                 >
-                  {stats.lastGame > 0 ? `#${stats.lastGame}` : "—"}
+                  {stats.lastGame > 0 && displayNumberOf.has(stats.lastGame)
+                    ? `#${displayNumberOf.get(stats.lastGame)}`
+                    : "—"}
                 </td>
               </tr>
             );
