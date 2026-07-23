@@ -25,6 +25,13 @@ export function PlayerStatsPanel({
 
   const statsOf = (id: number) => playerStats[id] ?? emptyStats();
 
+  const winRateOf = (id: number): string => {
+    const s = statsOf(id);
+    const decided = s.wins + s.losses;
+    if (decided === 0) return "—";
+    return `${Math.round((s.wins / decided) * 100)}%`;
+  };
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === -1 ? 1 : -1));
@@ -133,6 +140,7 @@ export function PlayerStatsPanel({
                 <SortIcon active={sortKey === "losses"} />
               </button>
             </th>
+            <th className="font-medium pb-2 text-center">W%</th>
             <th className="font-medium pb-2 text-right">Last Game</th>
           </tr>
         </thead>
@@ -161,6 +169,12 @@ export function PlayerStatsPanel({
                   style={{ color: "#B4483A" }}
                 >
                   {stats.losses}
+                </td>
+                <td
+                  className="py-1.5 text-center kq-mono"
+                  style={{ color: INK }}
+                >
+                  {winRateOf(p.id)}
                 </td>
                 <td
                   className="py-1.5 text-right kq-mono"
