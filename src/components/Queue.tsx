@@ -434,6 +434,82 @@ export function Queue() {
     gameRef.current = 0;
   };
 
+  const deleteMatch = (gameNumber: number) => {
+    const match = matches.find((m) => m.gameNumber === gameNumber);
+    if (!match) return;
+
+    // Guard: don't delete a game still live on a court.
+    const isLive = courts.some((c) => c && c.gameNumber === gameNumber);
+    if (isLive) {
+      window.alert(
+        "This game is still in progress on a court. Finish or reset the court first.",
+      );
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Delete Game #${displayNumberOf.get(gameNumber) ?? gameNumber}? This removes it from history and rolls back the players' stats.`,
+      )
+    )
+      return;
+
+    if (gameNumber === gameRef.current) {
+      gameRef.current -= 1;
+    }
+
+    setMatches((prev) => {
+      const remaining = prev.filter((m) => m.gameNumber !== gameNumber);
+
+      setPlayerStats((prevStats) => {
+        const next = { ...prevStats };
+        const players = [...match.teamA, ...match.teamB];
+        players.forEach((id) => {
+          const existing = next[id];
+          if (!existing) return;
+
+          // Roll back the match count.
+          let wins = existing.wins;
+          let losses = existing.losses;
+
+          // Roll back W/L if this game had a recorded winner.
+          if (match.winner) {
+            const wasWinner =
+              (match.winner === "A" && match.teamA.includes(id)) ||
+              (match.winner === "B" && match.teamB.includes(id));
+            if (wasWinner) wins = Math.max(0, wins - 1);
+            else losses = Math.max(0, losses - 1);
+          }
+
+          // Recompute lastGame and lastResult from surviving matches.
+          const priorGames = remaining
+            .filter((m) => m.teamA.includes(id) || m.teamB.includes(id))
+            .sort((a, b) => b.gameNumber - a.gameNumber);
+          const mostRecent = priorGames[0];
+          let lastResult: "W" | "L" | null = null;
+          if (mostRecent && mostRecent.winner) {
+            const won =
+              (mostRecent.winner === "A" && mostRecent.teamA.includes(id)) ||
+              (mostRecent.winner === "B" && mostRecent.teamB.includes(id));
+            lastResult = won ? "W" : "L";
+          }
+
+          next[id] = {
+            ...existing,
+            matches: Math.max(0, existing.matches - 1),
+            wins,
+            losses,
+            lastGame: mostRecent ? mostRecent.gameNumber : 0,
+            lastResult,
+          };
+        });
+        return next;
+      });
+
+      return remaining;
+    });
+  };
+
   const nextUp = useMemo(() => queueIds.slice(0, 4), [queueIds]);
 
   const displayNumberOf = useMemo(() => {
@@ -560,6 +636,7 @@ export function Queue() {
               matches={matches}
               nameOf={nameOf}
               displayNumberOf={displayNumberOf}
+              onDeleteMatch={deleteMatch}
             />
             <PlayerStatsPanel
               roster={roster.filter(

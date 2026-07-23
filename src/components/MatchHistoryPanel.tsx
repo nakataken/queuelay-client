@@ -1,4 +1,4 @@
-import { History, ChevronDown, ChevronUp } from "lucide-react";
+import { History, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { MatchRecord, CARD, CARD_LINE, INK, INK_SOFT } from "../types";
 import { fmtClock } from "../utils";
 import { useState } from "react";
@@ -31,10 +31,12 @@ export function MatchHistoryPanel({
   matches,
   nameOf,
   displayNumberOf,
+  onDeleteMatch,
 }: {
   matches: MatchRecord[];
   nameOf: (id: number) => string;
   displayNumberOf: Map<number, number>;
+  onDeleteMatch: (gameNumber: number) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -94,10 +96,25 @@ export function MatchHistoryPanel({
                     Game #{displayNumberOf.get(m.gameNumber)} &middot; Court{" "}
                     {m.courtIndex + 1}
                   </span>
-                  <span className="text-xs kq-mono" style={{ color: INK_SOFT }}>
+                  <span
+                    className="text-xs kq-mono flex items-center gap-2"
+                    style={{ color: INK_SOFT }}
+                  >
                     {m.finishedAt
                       ? fmtClock(m.finishedAt - m.startedAt)
                       : "In progress"}
+                    {m.finishedAt && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteMatch(m.gameNumber)}
+                        aria-label={`Delete game ${displayNumberOf.get(m.gameNumber) ?? m.gameNumber}`}
+                        title="Delete this match"
+                        className="kq-btn w-5 h-5 flex items-center justify-center rounded-full"
+                        style={{ background: "rgba(0,0,0,0.06)" }}
+                      >
+                        <Trash2 size={11} style={{ color: "#B4483A" }} />
+                      </button>
+                    )}
                   </span>
                 </div>
 
