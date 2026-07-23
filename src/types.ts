@@ -132,3 +132,17 @@ export interface MatchRecord {
   finishedAt: number | null;
   winner: "A" | "B" | null; // null = no winner recorded / still in progress
 }
+
+export interface Snapshot {
+  numCourts: number;
+  courts: Court[];
+  roster: Player[];
+  queueIds: number[];
+  requeue: boolean;
+  playerStats: Record<number, PlayerStats>;
+  matches: MatchRecord[];
+  matchMode: MatchMode;
+  nextId: number;
+  colorCounter: number;
+  gameCounter: number;
+}

@@ -10,6 +10,7 @@ import {
   LEVEL_CYCLE,
   BG,
   MatchMode,
+  Snapshot,
 } from "../types";
 import {
   shuffle,
@@ -55,6 +56,7 @@ export function Queue() {
   );
   const [matches, setMatches] = useState<MatchRecord[]>(saved?.matches ?? []);
   const [activeTab, setActiveTab] = useState<TabKey>("queue");
+  const [undoSnapshot, setUndoSnapshot] = useState<Snapshot | null>(null);
 
   const gameRef = useRef<number>(saved?.gameCounter ?? 0);
 
@@ -80,6 +82,52 @@ export function Queue() {
 
   const canRemoveCourt = numCourts > 1 && !courts[numCourts - 1];
   const canAddCourt = numCourts < 10;
+
+  const undo = () => {
+    if (!undoSnapshot) return;
+    setNumCourts(undoSnapshot.numCourts);
+    setCourts(undoSnapshot.courts);
+    setRoster(undoSnapshot.roster);
+    setQueueIds(undoSnapshot.queueIds);
+    setRequeue(undoSnapshot.requeue);
+    setPlayerStats(undoSnapshot.playerStats);
+    setMatches(undoSnapshot.matches);
+    setMatchMode(undoSnapshot.matchMode);
+    idRef.current = undoSnapshot.nextId;
+    colorRef.current = undoSnapshot.colorCounter;
+    gameRef.current = undoSnapshot.gameCounter;
+    setUndoSnapshot(null); // single-level: consume the snapshot
+  };
+
+  const captureSnapshot = () => {
+    setUndoSnapshot({
+      numCourts,
+      courts: courts.map((c) =>
+        c
+          ? {
+              ...c,
+              ids: [...c.ids],
+              teams: { teamA: [...c.teams.teamA], teamB: [...c.teams.teamB] },
+            }
+          : null,
+      ),
+      roster: roster.map((p) => ({ ...p })),
+      queueIds: [...queueIds],
+      requeue,
+      playerStats: Object.fromEntries(
+        Object.entries(playerStats).map(([id, s]) => [id, { ...s }]),
+      ),
+      matches: matches.map((m) => ({
+        ...m,
+        teamA: [...m.teamA],
+        teamB: [...m.teamB],
+      })),
+      matchMode,
+      nextId: idRef.current,
+      colorCounter: colorRef.current,
+      gameCounter: gameRef.current,
+    });
+  };
 
   const addRosterMember = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -215,6 +263,7 @@ export function Queue() {
   };
 
   const assignToCourt = (idx: number) => {
+    captureSnapshot();
     const group = queueIds.slice(0, 4);
     if (group.length < 1) return;
     const activeMode = effectiveMode(group, matchMode, resultOf);
@@ -279,6 +328,7 @@ export function Queue() {
   };
 
   const finishGame = (idx: number, winner: "A" | "B") => {
+    captureSnapshot();
     const court = courts[idx];
     setCourts((c) => {
       const copy = [...c];
@@ -352,6 +402,7 @@ export function Queue() {
 
   const manualAssign = (idx: number, selectedIds: number[]) => {
     if (selectedIds.length !== 4) return;
+    captureSnapshot();
     const split = bestTeamSplit(
       selectedIds,
       levelOf,
@@ -365,6 +416,7 @@ export function Queue() {
   const resetCourt = (idx: number) => {
     const court = courts[idx];
     if (!court) return;
+    captureSnapshot();
 
     setCourts((c) => {
       const copy = [...c];
@@ -415,6 +467,9 @@ export function Queue() {
       )
     )
       return;
+
+    captureSnapshot();
+
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -453,6 +508,8 @@ export function Queue() {
       )
     )
       return;
+
+    captureSnapshot();
 
     if (gameNumber === gameRef.current) {
       gameRef.current -= 1;
@@ -581,6 +638,8 @@ export function Queue() {
           onReset={resetAll}
           canRemoveCourt={canRemoveCourt}
           canAddCourt={canAddCourt}
+          onUndo={undo}
+          canUndo={undoSnapshot !== null}
         />
 
         <TabBar active={activeTab} onChange={setActiveTab} />

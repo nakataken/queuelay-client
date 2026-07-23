@@ -1,4 +1,4 @@
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Undo2 } from "lucide-react";
 import { Logo } from "./Logo";
 
 export function Header({
@@ -7,12 +7,16 @@ export function Header({
   onReset,
   canRemoveCourt,
   canAddCourt,
+  onUndo,
+  canUndo,
 }: {
   numCourts: number;
   onChangeCourtCount: (delta: number) => void;
   onReset: () => void;
   canRemoveCourt: boolean;
   canAddCourt: boolean;
+  onUndo: () => void;
+  canUndo: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -62,6 +66,17 @@ export function Header({
             </button>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={!canUndo}
+          className="kq-btn flex items-center gap-1.5 text-xs font-medium px-3 py-2.5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{ background: "rgba(255,255,255,0.08)", color: "#9FC4BE" }}
+          title="Undo the last action (assign, finish, reset court, delete match, or reset all)"
+        >
+          <Undo2 size={14} /> Undo
+        </button>
 
         <button
           type="button"
