@@ -138,15 +138,42 @@ export function Queue() {
   };
 
   const removeRosterMember = (id: number) => {
+    // Find any in-progress court the player is currently on.
+    const courtWithPlayer = courts.find((c) => c && c.ids.includes(id));
+
     setRoster((r) => r.filter((p) => p.id !== id));
     setQueueIds((q) => q.filter((qid) => qid !== id));
+
     setCourts((c) =>
       c.map((court) =>
         court
-          ? { ...court, ids: court.ids.filter((cid) => cid !== id) }
+          ? {
+              ...court,
+              ids: court.ids.filter((cid) => cid !== id),
+              teams: {
+                teamA: court.teams.teamA.filter((cid) => cid !== id),
+                teamB: court.teams.teamB.filter((cid) => cid !== id),
+              },
+            }
           : court,
       ),
     );
+
+    // Keep the in-progress match record in sync (drop the player from its teams).
+    if (courtWithPlayer) {
+      setMatches((prev) =>
+        prev.map((m) =>
+          m.gameNumber === courtWithPlayer.gameNumber && m.finishedAt === null
+            ? {
+                ...m,
+                teamA: m.teamA.filter((pid) => pid !== id),
+                teamB: m.teamB.filter((pid) => pid !== id),
+              }
+            : m,
+        ),
+      );
+    }
+
     setPlayerStats((prev) => {
       const { [id]: _removed, ...rest } = prev;
       return rest;
@@ -300,31 +327,82 @@ export function Queue() {
     });
 
     setQueueIds((q) => q.filter((id) => id !== playerId));
+
+    // Credit the joining player with a match for this game.
+    setPlayerStats((prev) => {
+      const existing = prev[playerId] ?? emptyStats();
+      return {
+        ...prev,
+        [playerId]: {
+          ...existing,
+          matches: existing.matches + 1,
+          lastGame: court.gameNumber,
+        },
+      };
+    });
+
+    // Keep the match record in sync with the new lineup.
+    setMatches((prev) =>
+      prev.map((m) =>
+        m.gameNumber === court.gameNumber
+          ? { ...m, teamA: newTeamA, teamB: newTeamB }
+          : m,
+      ),
+    );
   };
 
   const removePlayerFromCourt = (idx: number, id: number) => {
     const court = courts[idx];
     if (!court) return;
 
+    const newTeamA = court.teams.teamA.filter((pid) => pid !== id);
+    const newTeamB = court.teams.teamB.filter((pid) => pid !== id);
+    const remainingIds = court.ids.filter((pid) => pid !== id);
+
     setCourts((c) => {
       const copy = [...c];
-      const remaining = court.ids.filter((pid) => pid !== id);
-      if (remaining.length === 0) {
+      if (remainingIds.length === 0) {
         copy[idx] = null;
       } else {
         copy[idx] = {
           ...court,
-          ids: remaining,
-          teams: {
-            teamA: court.teams.teamA.filter((pid) => pid !== id),
-            teamB: court.teams.teamB.filter((pid) => pid !== id),
-          },
+          ids: remainingIds,
+          teams: { teamA: newTeamA, teamB: newTeamB },
         };
       }
       return copy;
     });
 
     setQueueIds((q) => [id, ...q.filter((qid) => qid !== id)]);
+
+    // Compute the surviving matches for this game once, outside any setter.
+    const updatedMatches = matches.map((m) =>
+      m.gameNumber === court.gameNumber
+        ? { ...m, teamA: newTeamA, teamB: newTeamB }
+        : m,
+    );
+    setMatches(updatedMatches);
+
+    // Roll back the removed player's match credit and recompute lastGame.
+    setPlayerStats((prev) => {
+      const existing = prev[id];
+      if (!existing) return prev;
+      const priorGames = updatedMatches
+        .filter(
+          (m) =>
+            m.gameNumber !== court.gameNumber &&
+            (m.teamA.includes(id) || m.teamB.includes(id)),
+        )
+        .map((m) => m.gameNumber);
+      return {
+        ...prev,
+        [id]: {
+          ...existing,
+          matches: Math.max(0, existing.matches - 1),
+          lastGame: priorGames.length > 0 ? Math.max(...priorGames) : 0,
+        },
+      };
+    });
   };
 
   const finishGame = (idx: number, winner: "A" | "B") => {
@@ -368,22 +446,23 @@ export function Queue() {
   };
 
   const changeCourtCount = (delta: number) => {
-    setNumCourts((n) => {
-      const next = Math.min(10, Math.max(1, n + delta));
-      setCourts((c) => {
-        if (next > c.length)
-          return [...c, ...Array(next - c.length).fill(null)];
-        const dropped = c.slice(next);
-        if (dropped.some((x) => x)) return c;
-        return c.slice(0, next);
-      });
-      return next;
-    });
+    const next = Math.min(10, Math.max(1, numCourts + delta));
+    if (next === numCourts) return;
+
+    if (next < courts.length) {
+      // Refuse to drop courts that still have active games.
+      const dropped = courts.slice(next);
+      if (dropped.some((x) => x)) return;
+      setCourts(courts.slice(0, next));
+    } else if (next > courts.length) {
+      setCourts([...courts, ...Array(next - courts.length).fill(null)]);
+    }
+    setNumCourts(next);
   };
 
   const shuffleCourtTeams = (idx: number) => {
     const court = courts[idx];
-    if (!court) return;
+    if (!court || court.ids.length !== 4) return;
     const shuffled = shuffle(court.ids);
     const teamA = shuffled.slice(0, 2);
     const teamB = shuffled.slice(2, 4);
@@ -429,34 +508,38 @@ export function Queue() {
       ...q.filter((id) => !court.ids.includes(id)),
     ]);
 
-    // Only roll back the counter if this was the most recently issued game number —
-    // if other games have already been assigned after it, don't renumber (that would
-    // shift/collide with games that genuinely happened).
     if (court.gameNumber === gameRef.current) {
       gameRef.current -= 1;
     }
 
-    setMatches((prev) => {
-      const remaining = prev.filter((m) => m.gameNumber !== court.gameNumber);
+    // Compute the surviving matches once, from current state — no nesting.
+    const remaining = matches.filter((m) => m.gameNumber !== court.gameNumber);
 
-      setPlayerStats((prevStats) => {
-        const next = { ...prevStats };
-        court.ids.forEach((id) => {
-          const existing = next[id];
-          if (!existing) return;
-          const priorGames = remaining
-            .filter((m) => m.teamA.includes(id) || m.teamB.includes(id))
-            .map((m) => m.gameNumber);
-          next[id] = {
-            ...existing,
-            matches: Math.max(0, existing.matches - 1),
-            lastGame: priorGames.length > 0 ? Math.max(...priorGames) : 0,
-          };
-        });
-        return next;
+    // Update matches independently.
+    setMatches(remaining);
+
+    // Update stats independently, using the already-computed `remaining`.
+    setPlayerStats((prevStats) => {
+      const next = { ...prevStats };
+      const playedThisGame = new Set([
+        ...court.teams.teamA,
+        ...court.teams.teamB,
+      ]);
+      court.ids.forEach((id) => {
+        const existing = next[id];
+        if (!existing) return;
+        const priorGames = remaining
+          .filter((m) => m.teamA.includes(id) || m.teamB.includes(id))
+          .map((m) => m.gameNumber);
+        next[id] = {
+          ...existing,
+          matches: playedThisGame.has(id)
+            ? Math.max(0, existing.matches - 1)
+            : existing.matches,
+          lastGame: priorGames.length > 0 ? Math.max(...priorGames) : 0,
+        };
       });
-
-      return remaining;
+      return next;
     });
   };
 
@@ -515,55 +598,56 @@ export function Queue() {
       gameRef.current -= 1;
     }
 
-    setMatches((prev) => {
-      const remaining = prev.filter((m) => m.gameNumber !== gameNumber);
+    // Compute surviving matches once, from current state — no nesting.
+    const remaining = matches.filter((m) => m.gameNumber !== gameNumber);
 
-      setPlayerStats((prevStats) => {
-        const next = { ...prevStats };
-        const players = [...match.teamA, ...match.teamB];
-        players.forEach((id) => {
-          const existing = next[id];
-          if (!existing) return;
+    // Update matches independently.
+    setMatches(remaining);
 
-          // Roll back the match count.
-          let wins = existing.wins;
-          let losses = existing.losses;
+    // Roll back stats independently, using the already-computed `remaining`.
+    setPlayerStats((prev) => {
+      const next = { ...prev };
+      const players = [...match.teamA, ...match.teamB];
+      players.forEach((id) => {
+        const existing = next[id];
+        if (!existing) return;
 
-          // Roll back W/L if this game had a recorded winner.
-          if (match.winner) {
-            const wasWinner =
-              (match.winner === "A" && match.teamA.includes(id)) ||
-              (match.winner === "B" && match.teamB.includes(id));
-            if (wasWinner) wins = Math.max(0, wins - 1);
-            else losses = Math.max(0, losses - 1);
-          }
+        // Roll back the match count.
+        let wins = existing.wins;
+        let losses = existing.losses;
 
-          // Recompute lastGame and lastResult from surviving matches.
-          const priorGames = remaining
-            .filter((m) => m.teamA.includes(id) || m.teamB.includes(id))
-            .sort((a, b) => b.gameNumber - a.gameNumber);
-          const mostRecent = priorGames[0];
-          let lastResult: "W" | "L" | null = null;
-          if (mostRecent && mostRecent.winner) {
-            const won =
-              (mostRecent.winner === "A" && mostRecent.teamA.includes(id)) ||
-              (mostRecent.winner === "B" && mostRecent.teamB.includes(id));
-            lastResult = won ? "W" : "L";
-          }
+        // Roll back W/L if this game had a recorded winner.
+        if (match.winner) {
+          const wasWinner =
+            (match.winner === "A" && match.teamA.includes(id)) ||
+            (match.winner === "B" && match.teamB.includes(id));
+          if (wasWinner) wins = Math.max(0, wins - 1);
+          else losses = Math.max(0, losses - 1);
+        }
 
-          next[id] = {
-            ...existing,
-            matches: Math.max(0, existing.matches - 1),
-            wins,
-            losses,
-            lastGame: mostRecent ? mostRecent.gameNumber : 0,
-            lastResult,
-          };
-        });
-        return next;
+        // Recompute lastGame and lastResult from surviving matches.
+        const priorGames = remaining
+          .filter((m) => m.teamA.includes(id) || m.teamB.includes(id))
+          .sort((a, b) => b.gameNumber - a.gameNumber);
+        const mostRecent = priorGames[0];
+        let lastResult: "W" | "L" | null = null;
+        if (mostRecent && mostRecent.winner) {
+          const won =
+            (mostRecent.winner === "A" && mostRecent.teamA.includes(id)) ||
+            (mostRecent.winner === "B" && mostRecent.teamB.includes(id));
+          lastResult = won ? "W" : "L";
+        }
+
+        next[id] = {
+          ...existing,
+          matches: Math.max(0, existing.matches - 1),
+          wins,
+          losses,
+          lastGame: mostRecent ? mostRecent.gameNumber : 0,
+          lastResult,
+        };
       });
-
-      return remaining;
+      return next;
     });
   };
 
