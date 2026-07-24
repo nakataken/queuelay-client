@@ -20,6 +20,8 @@ export function CourtsPanel({
   onRemovePlayer,
   nameOf,
   levelOf,
+  matchesOf,
+  lastGameOf,
 }: {
   courts: Court[];
   tick: number;
@@ -36,6 +38,8 @@ export function CourtsPanel({
   waitingPlayers: Player[];
   nameOf: (id: number) => string;
   levelOf: (id: number) => PlayerLevel;
+  matchesOf: (id: number) => number;
+  lastGameOf: (id: number) => number;
 }) {
   const [pickerOpenIdx, setPickerOpenIdx] = useState<number | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
@@ -49,6 +53,16 @@ export function CourtsPanel({
           : s,
     );
   };
+
+  const sortedWaiting = [...waitingPlayers].sort((a, b) => {
+    const ma = matchesOf(a.id);
+    const mb = matchesOf(b.id);
+    if (ma !== mb) return ma - mb; // fewest matches first
+    const la = lastGameOf(a.id);
+    const lb = lastGameOf(b.id);
+    if (la !== lb) return la - lb; // then oldest last game (longest waiting)
+    return a.name.localeCompare(b.name); // stable tiebreaker
+  });
 
   return (
     <div>
@@ -239,7 +253,7 @@ export function CourtsPanel({
                         + Add player ({4 - court.ids.length} slot
                         {4 - court.ids.length === 1 ? "" : "s"} open)
                       </option>
-                      {waitingPlayers.map((p) => (
+                      {sortedWaiting.map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.name}
                         </option>
@@ -265,10 +279,10 @@ export function CourtsPanel({
                 {pickerOpenIdx === idx ? (
                   <div className="w-full">
                     <div className="flex flex-wrap gap-1.5 justify-center mb-2 max-h-28 overflow-y-auto">
-                      {waitingPlayers.map((p) => (
+                      {sortedWaiting.map((p) => (
                         <button
-                          type="button"
                           key={p.id}
+                          type="button"
                           onClick={() => toggleSelected(p.id)}
                           className="text-xs px-2 py-1 rounded-full font-medium"
                           style={{
