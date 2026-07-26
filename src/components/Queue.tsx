@@ -11,6 +11,7 @@ import {
   BG,
   MatchMode,
   Snapshot,
+  MatchCategory,
 } from "../types";
 import {
   shuffle,
@@ -28,6 +29,7 @@ import { PlayerStatsPanel } from "./PlayerStatsPanel";
 import { MatchRecord } from "../types";
 import { TabBar, TabKey } from "../components/TabBar";
 import { MatchHistoryPanel } from "../components/MatchHistoryPanel";
+import { CategorySelector } from "./CategorySelector";
 
 const saved = typeof window !== "undefined" ? loadSaved() : null;
 
@@ -56,6 +58,10 @@ export function Queue() {
   const [matches, setMatches] = useState<MatchRecord[]>(saved?.matches ?? []);
   const [activeTab, setActiveTab] = useState<TabKey>("queue");
   const [undoSnapshot, setUndoSnapshot] = useState<Snapshot | null>(null);
+
+  const [matchCategory, setMatchCategory] = useState<MatchCategory>(
+    saved?.matchCategory ?? "freeplay",
+  );
 
   const gameRef = useRef<number>(saved?.gameCounter ?? 0);
 
@@ -650,6 +656,7 @@ export function Queue() {
           playerStats,
           matches,
           matchMode,
+          matchCategory,
           nextId: idRef.current,
           colorCounter: colorRef.current,
           gameCounter: gameRef.current,
@@ -667,6 +674,7 @@ export function Queue() {
     playerStats,
     matches,
     matchMode,
+    matchCategory,
   ]);
 
   return (
@@ -703,9 +711,17 @@ export function Queue() {
         <TabBar active={activeTab} onChange={setActiveTab} />
 
         {activeTab === "queue" && (
-          <ModeSelector mode={matchMode} onChange={setMatchMode} />
+          <>
+            <CategorySelector
+              category={matchCategory}
+              onChange={setMatchCategory}
+            />
+            {matchCategory === "freeplay" && (
+              <ModeSelector mode={matchMode} onChange={setMatchMode} />
+            )}
+            {/* Phase 2: when matchCategory === "mixer", render the MixerPanel schedule here */}
+          </>
         )}
-
         {activeTab === "queue" ? (
           <div className="flex flex-col gap-5">
             <AvailablePanel

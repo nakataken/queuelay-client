@@ -79,6 +79,16 @@ export const MATCH_MODE_DESC: Record<MatchMode, string> = {
   winloss: "Balances recent winners and losers on each side.",
 };
 
+export const MATCH_CATEGORY_LABEL: Record<MatchCategory, string> = {
+  freeplay: "Freeplay",
+  mixer: "Mixer",
+};
+
+export const MATCH_CATEGORY_DESC: Record<MatchCategory, string> = {
+  freeplay: "Assign games on the fly — Mixed, Competitive, or Win/Loss.",
+  mixer: "Predetermined round-robin — everyone partners everyone.",
+};
+
 // TYPES
 export type PlayerLevel = "A" | "B" | "C";
 
@@ -87,6 +97,8 @@ export type Court = ActiveCourt | null;
 export type MatchMode = "mixed" | "competitive" | "winloss";
 
 export type SortKey = "matches" | "wins" | "losses";
+
+export type MatchCategory = "freeplay" | "mixer";
 
 // INTERFACES
 export interface Player {
