@@ -12,6 +12,7 @@ import {
   MatchMode,
   Snapshot,
   MatchCategory,
+  MixerRound,
 } from "../types";
 import {
   shuffle,
@@ -19,6 +20,7 @@ import {
   loadSaved,
   effectiveMode,
   emptyStats,
+  generateMixerSchedule,
 } from "../utils";
 import { ModeSelector } from "../components/ModeSelector";
 import { Header } from "./Header";
@@ -30,6 +32,7 @@ import { MatchRecord } from "../types";
 import { TabBar, TabKey } from "../components/TabBar";
 import { MatchHistoryPanel } from "../components/MatchHistoryPanel";
 import { CategorySelector } from "./CategorySelector";
+import { MixerPanel } from "../components/MixerPanel";
 
 const saved = typeof window !== "undefined" ? loadSaved() : null;
 
@@ -63,6 +66,14 @@ export function Queue() {
     saved?.matchCategory ?? "freeplay",
   );
 
+  const [mixerSchedule, setMixerSchedule] = useState<MixerRound[]>(
+    saved?.mixerSchedule ?? [],
+  );
+
+  const generateSchedule = () => {
+    setMixerSchedule(generateMixerSchedule(queueIds));
+  };
+
   const gameRef = useRef<number>(saved?.gameCounter ?? 0);
 
   useEffect(() => {
@@ -86,6 +97,22 @@ export function Queue() {
   const lastGameOf = (id: number): number => playerStats[id]?.lastGame ?? 0;
   const matchesOf = (id: number): number => playerStats[id]?.matches ?? 0;
 
+  const mixerStale = useMemo(() => {
+    if (mixerSchedule.length === 0) return false;
+    const scheduled = new Set<number>();
+    mixerSchedule.forEach((r) => {
+      r.games.forEach((g) =>
+        [...g.teamA, ...g.teamB].forEach((id) => scheduled.add(id)),
+      );
+      r.byes.forEach((id) => scheduled.add(id));
+    });
+    const waiting = new Set(queueIds);
+    // Stale if the sets differ (someone added/removed since generation).
+    if (scheduled.size !== waiting.size) return true;
+    for (const id of waiting) if (!scheduled.has(id)) return true;
+    return false;
+  }, [mixerSchedule, queueIds]);
+
   const canRemoveCourt = numCourts > 1 && !courts[numCourts - 1];
   const canAddCourt = numCourts < 10;
 
@@ -103,6 +130,24 @@ export function Queue() {
     colorRef.current = undoSnapshot.colorCounter;
     gameRef.current = undoSnapshot.gameCounter;
     setUndoSnapshot(null); // single-level: consume the snapshot
+  };
+
+  const assignMixerGame = (
+    teamA: [number, number],
+    teamB: [number, number],
+  ) => {
+    const openIdx = courts.findIndex((c) => !c);
+    if (openIdx < 0) return; // no open court
+
+    const playing = new Set(courts.flatMap((c) => (c ? c.ids : [])));
+    const all = [...teamA, ...teamB];
+    if (all.some((id) => playing.has(id))) {
+      window.alert("Some of these players are already on a court.");
+      return;
+    }
+
+    captureSnapshot();
+    finalizeAssignment(openIdx, [...teamA], [...teamB]);
   };
 
   const captureSnapshot = () => {
@@ -547,6 +592,7 @@ export function Queue() {
     setRequeue(true);
     setPlayerStats({});
     setMatches([]);
+    setMixerSchedule([]);
     idRef.current = SEED_ROSTER.length + 1;
     colorRef.current = 0;
     gameRef.current = 0;
@@ -657,6 +703,7 @@ export function Queue() {
           matches,
           matchMode,
           matchCategory,
+          mixerSchedule,
           nextId: idRef.current,
           colorCounter: colorRef.current,
           gameCounter: gameRef.current,
@@ -675,6 +722,7 @@ export function Queue() {
     matches,
     matchMode,
     matchCategory,
+    mixerSchedule,
   ]);
 
   return (
@@ -719,7 +767,17 @@ export function Queue() {
             {matchCategory === "freeplay" && (
               <ModeSelector mode={matchMode} onChange={setMatchMode} />
             )}
-            {/* Phase 2: when matchCategory === "mixer", render the MixerPanel schedule here */}
+            {matchCategory === "mixer" && (
+              <MixerPanel
+                schedule={mixerSchedule}
+                nameOf={nameOf}
+                onAssignGame={assignMixerGame}
+                onGenerate={generateSchedule}
+                openCourtExists={openCourtExists}
+                canGenerate={queueIds.length >= 4}
+                stale={mixerStale}
+              />
+            )}
           </>
         )}
         {activeTab === "queue" ? (

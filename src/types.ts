@@ -158,3 +158,14 @@ export interface Snapshot {
   colorCounter: number;
   gameCounter: number;
 }
+
+export interface MixerGame {
+  teamA: [number, number];
+  teamB: [number, number];
+}
+
+export interface MixerRound {
+  roundNumber: number;
+  games: MixerGame[];
+  byes: number[];
+}

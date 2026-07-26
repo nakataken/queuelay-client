@@ -4,6 +4,8 @@ import {
   STORAGE_KEY,
   MatchMode,
   PlayerStats,
+  MixerRound,
+  MixerGame,
 } from "./types";
 
 export function fmtClock(ms: number): string {
@@ -206,4 +208,60 @@ export function effectiveMode(
   if (mode !== "winloss") return mode;
   const hasAnyRecord = queueIds.some((id) => resultOf(id) !== null);
   return hasAnyRecord ? "winloss" : "mixed";
+}
+
+export function generateMixerSchedule(playerIds: number[]): MixerRound[] {
+  const ids = [...playerIds];
+  if (ids.length < 4) return []; // need at least one full game
+
+  // Use a ghost (-1) to make the count even for the rotation.
+  const GHOST = -1;
+  const working = [...ids];
+  if (working.length % 2 !== 0) working.push(GHOST);
+
+  const n = working.length;
+  const rounds = n - 1; // circle method: n-1 rounds for full pairing coverage
+  const half = n / 2;
+
+  const schedule: MixerRound[] = [];
+  const arr = [...working];
+
+  for (let r = 0; r < rounds; r++) {
+    // Pair players across the circle: arr[i] with arr[n-1-i].
+    const pairs: [number, number][] = [];
+    for (let i = 0; i < half; i++) {
+      pairs.push([arr[i], arr[n - 1 - i]]);
+    }
+
+    // Players sitting out this round (those paired with the ghost, or leftover).
+    const byes: number[] = [];
+    const teams: [number, number][] = [];
+    for (const [a, b] of pairs) {
+      if (a === GHOST) byes.push(b);
+      else if (b === GHOST) byes.push(a);
+      else teams.push([a, b]);
+    }
+
+    // Best-effort: match consecutive teams into games (2 teams = 1 game).
+    // Leftover teams that can't form a full game become byes for this round.
+    const games: MixerGame[] = [];
+    let t = 0;
+    for (; t + 1 < teams.length; t += 2) {
+      games.push({ teamA: teams[t], teamB: teams[t + 1] });
+    }
+    // Any unpaired team (odd number of teams) sits out.
+    for (; t < teams.length; t++) {
+      byes.push(...teams[t]);
+    }
+
+    schedule.push({ roundNumber: r + 1, games, byes });
+
+    // Rotate: keep first fixed, rotate the rest clockwise.
+    const fixed = arr[0];
+    const rest = arr.slice(1);
+    rest.unshift(rest.pop() as number);
+    arr.splice(0, arr.length, fixed, ...rest);
+  }
+
+  return schedule;
 }
