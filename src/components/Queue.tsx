@@ -16,7 +16,6 @@ import {
   shuffle,
   bestTeamSplit,
   loadSaved,
-  pickNextGroup,
   effectiveMode,
   emptyStats,
 } from "../utils";
@@ -206,33 +205,7 @@ export function Queue() {
   };
 
   const shuffleQueue = () => {
-    setQueueIds((q) => {
-      let remaining = shuffle(q); // randomness: breaks ties differently each press
-      const ordered: number[] = [];
-
-      // Repeatedly pull the best mode-aware, fairness-first group of 4
-      // from the front of the (randomized) remaining pool.
-      while (remaining.length > 0) {
-        const group = pickNextGroup(
-          remaining,
-          playerStats,
-          levelOf,
-          matchMode,
-          resultOf,
-          lastGameOf,
-        );
-        if (group.length === 0) {
-          // safety: nothing selected — append the rest as-is
-          ordered.push(...remaining);
-          break;
-        }
-        const groupSet = new Set(group);
-        ordered.push(...group);
-        remaining = remaining.filter((id) => !groupSet.has(id));
-      }
-
-      return ordered;
-    });
+    setQueueIds((q) => shuffle(q));
   };
 
   const finalizeAssignment = (
