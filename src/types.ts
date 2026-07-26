@@ -39,7 +39,7 @@ export const COURT_COLORS: CourtColor[] = [
 ];
 
 const RAW_ROSTER: SeedPlayer[] = [
-  { name: "Acob", level: "A" },
+  { name: "Acob", level: "B" },
   { name: "Bryan", level: "A" },
   { name: "Chad", level: "A" },
   { name: "Chacha", level: "B" },
@@ -51,13 +51,13 @@ const RAW_ROSTER: SeedPlayer[] = [
   { name: "Osong", level: "B" },
   { name: "Khaye", level: "B" },
   { name: "Ken", level: "B" },
-  { name: "Kevin", level: "A" },
+  { name: "Kevin", level: "B" },
   { name: "Kleo", level: "B" },
   { name: "Mac", level: "B" },
   { name: "Rose", level: "B" },
   { name: "Roy", level: "B" },
   { name: "Ryan", level: "A" },
-  { name: "Sandee", level: "A" },
+  { name: "Sandee", level: "B" },
   { name: "Solange", level: "C" },
   { name: "Topher", level: "B" },
   { name: "Trixie", level: "B" },
