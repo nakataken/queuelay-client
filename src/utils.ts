@@ -212,55 +212,42 @@ export function effectiveMode(
 
 export function generateMixerSchedule(playerIds: number[]): MixerRound[] {
   const ids = [...playerIds];
-  if (ids.length < 4) return []; // need at least one full game
+  if (ids.length < 4) return [];
 
-  // Use a ghost (-1) to make the count even for the rotation.
-  const GHOST = -1;
-  const working = [...ids];
-  if (working.length % 2 !== 0) working.push(GHOST);
-
-  const n = working.length;
-  const rounds = n - 1; // circle method: n-1 rounds for full pairing coverage
-  const half = n / 2;
+  const n = ids.length;
+  const perRound = Math.floor(n / 4) * 4; // players who actually play each round
+  const byesPerRound = n - perRound; // players sitting out each round
+  const rounds = n - 1; // enough rounds for good partnership variety
 
   const schedule: MixerRound[] = [];
-  const arr = [...working];
+  let byePointer = 0;
 
   for (let r = 0; r < rounds; r++) {
-    // Pair players across the circle: arr[i] with arr[n-1-i].
-    const pairs: [number, number][] = [];
-    for (let i = 0; i < half; i++) {
-      pairs.push([arr[i], arr[n - 1 - i]]);
-    }
-
-    // Players sitting out this round (those paired with the ghost, or leftover).
+    // --- Fair bye selection: take the next slice via a rotating pointer ---
     const byes: number[] = [];
-    const teams: [number, number][] = [];
-    for (const [a, b] of pairs) {
-      if (a === GHOST) byes.push(b);
-      else if (b === GHOST) byes.push(a);
-      else teams.push([a, b]);
+    for (let i = 0; i < byesPerRound; i++) {
+      byes.push(ids[(byePointer + i) % n]);
     }
+    // Advance the pointer PAST this round's byes so the next round draws
+    // different players — guarantees no back-to-back byes.
+    byePointer = (byePointer + byesPerRound) % n;
 
-    // Best-effort: match consecutive teams into games (2 teams = 1 game).
-    // Leftover teams that can't form a full game become byes for this round.
+    const byeSet = new Set(byes);
+    const playing = ids.filter((id) => !byeSet.has(id));
+
+    // --- Vary partnerships: rotate the playing pool by the round index ---
+    const rotated = playing.map((_, i) => playing[(i + r) % playing.length]);
+
+    // Pair adjacent players into teams, adjacent teams into games.
     const games: MixerGame[] = [];
-    let t = 0;
-    for (; t + 1 < teams.length; t += 2) {
-      games.push({ teamA: teams[t], teamB: teams[t + 1] });
-    }
-    // Any unpaired team (odd number of teams) sits out.
-    for (; t < teams.length; t++) {
-      byes.push(...teams[t]);
+    for (let i = 0; i + 3 < rotated.length; i += 4) {
+      games.push({
+        teamA: [rotated[i], rotated[i + 1]],
+        teamB: [rotated[i + 2], rotated[i + 3]],
+      });
     }
 
     schedule.push({ roundNumber: r + 1, games, byes });
-
-    // Rotate: keep first fixed, rotate the rest clockwise.
-    const fixed = arr[0];
-    const rest = arr.slice(1);
-    rest.unshift(rest.pop() as number);
-    arr.splice(0, arr.length, fixed, ...rest);
   }
 
   return schedule;

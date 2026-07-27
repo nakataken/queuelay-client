@@ -106,12 +106,17 @@ export function Queue() {
       );
       r.byes.forEach((id) => scheduled.add(id));
     });
-    const waiting = new Set(queueIds);
-    // Stale if the sets differ (someone added/removed since generation).
-    if (scheduled.size !== waiting.size) return true;
-    for (const id of waiting) if (!scheduled.has(id)) return true;
+    // Include BOTH waiting and currently-playing players, so assigning a
+    // game (queue -> court) doesn't falsely trigger "out of date".
+    const active = new Set<number>([
+      ...queueIds,
+      ...courts.flatMap((c) => (c ? c.ids : [])),
+    ]);
+    // Stale only if a player was genuinely added/removed since generation.
+    if (scheduled.size !== active.size) return true;
+    for (const id of active) if (!scheduled.has(id)) return true;
     return false;
-  }, [mixerSchedule, queueIds]);
+  }, [mixerSchedule, queueIds, courts]);
 
   const canRemoveCourt = numCourts > 1 && !courts[numCourts - 1];
   const canAddCourt = numCourts < 10;
