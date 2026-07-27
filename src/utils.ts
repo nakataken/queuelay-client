@@ -242,6 +242,7 @@ export function generateMixerSchedule(playerIds: number[]): MixerRound[] {
     const games: MixerGame[] = [];
     for (let i = 0; i + 3 < rotated.length; i += 4) {
       games.push({
+        id: `r${r + 1}-g${games.length}`,
         teamA: [rotated[i], rotated[i + 1]],
         teamB: [rotated[i + 2], rotated[i + 3]],
       });

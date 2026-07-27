@@ -70,8 +70,13 @@ export function Queue() {
     saved?.mixerSchedule ?? [],
   );
 
+  const [playedMixerGames, setPlayedMixerGames] = useState<string[]>(
+    saved?.playedMixerGames ?? [],
+  );
+
   const generateSchedule = () => {
     setMixerSchedule(generateMixerSchedule(queueIds));
+    setPlayedMixerGames([]);
   };
 
   const gameRef = useRef<number>(saved?.gameCounter ?? 0);
@@ -134,15 +139,18 @@ export function Queue() {
     idRef.current = undoSnapshot.nextId;
     colorRef.current = undoSnapshot.colorCounter;
     gameRef.current = undoSnapshot.gameCounter;
+    setMixerSchedule(undoSnapshot.mixerSchedule);
+    setPlayedMixerGames(undoSnapshot.playedMixerGames);
     setUndoSnapshot(null); // single-level: consume the snapshot
   };
 
   const assignMixerGame = (
+    gameId: string,
     teamA: [number, number],
     teamB: [number, number],
   ) => {
     const openIdx = courts.findIndex((c) => !c);
-    if (openIdx < 0) return; // no open court
+    if (openIdx < 0) return;
 
     const playing = new Set(courts.flatMap((c) => (c ? c.ids : [])));
     const all = [...teamA, ...teamB];
@@ -152,6 +160,9 @@ export function Queue() {
     }
 
     captureSnapshot();
+    setPlayedMixerGames((prev) =>
+      prev.includes(gameId) ? prev : [...prev, gameId],
+    );
     finalizeAssignment(openIdx, [...teamA], [...teamB]);
   };
 
@@ -182,6 +193,8 @@ export function Queue() {
       nextId: idRef.current,
       colorCounter: colorRef.current,
       gameCounter: gameRef.current,
+      mixerSchedule,
+      playedMixerGames,
     });
   };
 
@@ -598,6 +611,7 @@ export function Queue() {
     setPlayerStats({});
     setMatches([]);
     setMixerSchedule([]);
+    setPlayedMixerGames([]);
     idRef.current = SEED_ROSTER.length + 1;
     colorRef.current = 0;
     gameRef.current = 0;
@@ -709,6 +723,7 @@ export function Queue() {
           matchMode,
           matchCategory,
           mixerSchedule,
+          playedMixerGames,
           nextId: idRef.current,
           colorCounter: colorRef.current,
           gameCounter: gameRef.current,
@@ -728,6 +743,7 @@ export function Queue() {
     matchMode,
     matchCategory,
     mixerSchedule,
+    playedMixerGames,
   ]);
 
   return (
@@ -781,6 +797,8 @@ export function Queue() {
                 openCourtExists={openCourtExists}
                 canGenerate={queueIds.length >= 4}
                 stale={mixerStale}
+                playingIds={playingIds}
+                playedGames={new Set(playedMixerGames)}
               />
             )}
           </>

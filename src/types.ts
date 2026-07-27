@@ -157,9 +157,12 @@ export interface Snapshot {
   nextId: number;
   colorCounter: number;
   gameCounter: number;
+  mixerSchedule: MixerRound[];
+  playedMixerGames: string[];
 }
 
 export interface MixerGame {
+  id: string;
   teamA: [number, number];
   teamB: [number, number];
 }
