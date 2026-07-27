@@ -215,40 +215,98 @@ export function generateMixerSchedule(playerIds: number[]): MixerRound[] {
   if (ids.length < 4) return [];
 
   const n = ids.length;
-  const perRound = Math.floor(n / 4) * 4; // players who actually play each round
-  const byesPerRound = n - perRound; // players sitting out each round
-  const rounds = n - 1; // enough rounds for good partnership variety
+  const byesPerRound = n % 4;
+  const rounds = n - 1;
+
+  const key = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+  const partnerCount: Record<string, number> = {};
+  const opponentCount: Record<string, number> = {};
+  const get = (m: Record<string, number>, a: number, b: number) =>
+    m[key(a, b)] ?? 0;
+  const inc = (m: Record<string, number>, a: number, b: number) => {
+    m[key(a, b)] = (m[key(a, b)] ?? 0) + 1;
+  };
+
+  const buildCandidate = (pool: number[]) => {
+    const p = shuffle(pool);
+    const teams: [number, number][] = [];
+    let rest = [...p];
+    while (rest.length >= 2) {
+      const a = rest[0];
+      let best = rest[1];
+      let bestScore = get(partnerCount, a, best);
+      for (let j = 2; j < rest.length; j++) {
+        const s = get(partnerCount, a, rest[j]);
+        if (s < bestScore) {
+          bestScore = s;
+          best = rest[j];
+        }
+      }
+      teams.push([a, best]);
+      rest = rest.filter((id) => id !== a && id !== best);
+    }
+
+    const games: MixerGame[] = [];
+    let remaining = [...teams];
+    let penalty = 0;
+    while (remaining.length >= 2) {
+      const tA = remaining[0];
+      let bestIdx = 1;
+      let bestScore = Infinity;
+      for (let j = 1; j < remaining.length; j++) {
+        const tB = remaining[j];
+        const s =
+          get(opponentCount, tA[0], tB[0]) +
+          get(opponentCount, tA[0], tB[1]) +
+          get(opponentCount, tA[1], tB[0]) +
+          get(opponentCount, tA[1], tB[1]);
+        if (s < bestScore) {
+          bestScore = s;
+          bestIdx = j;
+        }
+      }
+      const tB = remaining[bestIdx];
+      penalty +=
+        get(partnerCount, tA[0], tA[1]) +
+        get(partnerCount, tB[0], tB[1]) +
+        bestScore;
+      games.push({ id: "", teamA: tA, teamB: tB });
+      remaining = remaining.filter((t) => t !== tA && t !== tB);
+    }
+    return { games, penalty, leftover: remaining.flat() };
+  };
 
   const schedule: MixerRound[] = [];
   let byePointer = 0;
 
   for (let r = 0; r < rounds; r++) {
-    // --- Fair bye selection: take the next slice via a rotating pointer ---
     const byes: number[] = [];
     for (let i = 0; i < byesPerRound; i++) {
       byes.push(ids[(byePointer + i) % n]);
     }
-    // Advance the pointer PAST this round's byes so the next round draws
-    // different players — guarantees no back-to-back byes.
     byePointer = (byePointer + byesPerRound) % n;
 
     const byeSet = new Set(byes);
-    const playing = ids.filter((id) => !byeSet.has(id));
+    const pool = ids.filter((id) => !byeSet.has(id));
 
-    // --- Vary partnerships: rotate the playing pool by the round index ---
-    const rotated = playing.map((_, i) => playing[(i + r) % playing.length]);
-
-    // Pair adjacent players into teams, adjacent teams into games.
-    const games: MixerGame[] = [];
-    for (let i = 0; i + 3 < rotated.length; i += 4) {
-      games.push({
-        id: `r${r + 1}-g${games.length}`,
-        teamA: [rotated[i], rotated[i + 1]],
-        teamB: [rotated[i + 2], rotated[i + 3]],
-      });
+    let best = buildCandidate(pool);
+    for (let attempt = 1; attempt < 40; attempt++) {
+      const cand = buildCandidate(pool);
+      if (cand.penalty < best.penalty) best = cand;
     }
 
-    schedule.push({ roundNumber: r + 1, games, byes });
+    best.games.forEach((g, gi) => {
+      g.id = `r${r + 1}-g${gi}`;
+      inc(partnerCount, g.teamA[0], g.teamA[1]);
+      inc(partnerCount, g.teamB[0], g.teamB[1]);
+      inc(opponentCount, g.teamA[0], g.teamB[0]);
+      inc(opponentCount, g.teamA[0], g.teamB[1]);
+      inc(opponentCount, g.teamA[1], g.teamB[0]);
+      inc(opponentCount, g.teamA[1], g.teamB[1]);
+    });
+
+    byes.push(...best.leftover);
+    schedule.push({ roundNumber: r + 1, games: best.games, byes });
   }
 
   return schedule;
