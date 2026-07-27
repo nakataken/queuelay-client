@@ -99,7 +99,7 @@ export function MixerPanel({
                 : "Add at least 4 players to the Waiting queue to generate a Mixer schedule."}
             </p>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-3 max-h-[28rem] overflow-y-auto pr-1">
               {schedule.map((round) => (
                 <li
                   key={round.roundNumber}

@@ -81,7 +81,7 @@ export function MatchHistoryPanel({
             here.
           </p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-2 max-h-[28rem] overflow-y-auto pr-1">
             {sorted.map((m) => (
               <li
                 key={m.gameNumber}
